@@ -1,0 +1,7 @@
+services:
+  orion-frontend:
+    build: .
+    container_name: orion-frontend
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
