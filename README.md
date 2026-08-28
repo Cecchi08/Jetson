@@ -15,6 +15,14 @@ npm install
 npm run dev
 ```
 
+Para conectar con OpenClaw, crea un archivo `.env` local a partir de `.env.example` y completa la URL, el token y el modelo configurado en OpenClaw:
+
+```bash
+cp .env.example .env
+```
+
+Las variables `VITE_*` se incorporan al bundle durante el build. No guardes `.env` en Git ni expongas este frontend fuera de una red controlada: el token queda disponible en el navegador.
+
 Vite escucha en `0.0.0.0:5173`, por lo que el desarrollo puede abrirse desde otro dispositivo en `http://IP-DE-LA-JETSON:5173`.
 
 ## Build de producción
@@ -31,6 +39,8 @@ El build se genera en `dist/`. El preview escucha en `0.0.0.0:4173`.
 Construir e iniciar en segundo plano:
 
 ```bash
+cp .env.example .env
+# Completa .env antes de construir
 docker compose up -d --build
 ```
 
@@ -72,6 +82,8 @@ Reconstruir después de cambios:
 docker compose up -d --build
 ```
 
+Al cambiar cualquier variable `VITE_*`, también debes reconstruir la imagen porque Docker las pasa como argumentos al build de Vite.
+
 Ver logs:
 
 ```bash
@@ -86,3 +98,7 @@ docker compose logs -f
 - `src/types/`: contratos TypeScript del dominio.
 
 Las conversaciones se guardan en `localStorage` bajo la clave `orion-conversations`.
+
+## CORS y OpenClaw
+
+El navegador realiza directamente `POST /v1/chat/completions` contra OpenClaw. Si el frontend y el Gateway usan distintos puertos u orígenes, OpenClaw debe aceptar mediante CORS el origen exacto del frontend, por ejemplo `http://IP-DE-LA-JETSON:8080`. Configura esa autorización siguiendo la documentación de tu versión de OpenClaw; no desactives CORS globalmente. Si el Gateway no permite CORS, esta conexión directa no funcionará hasta agregar un backend intermediario en una fase posterior.
