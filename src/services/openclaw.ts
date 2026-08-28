@@ -41,9 +41,11 @@ export const openClawService: AssistantService = {
       });
 
       if (!endpoint || !token || !model) {
+        console.error('[OpenClaw] configuración incompleta');
         throw new Error('OPENCLAW_CONFIG_ERROR');
       }
 
+      console.log('[OpenClaw] iniciando fetch', { url: `${endpoint}/v1/chat/completions`, messageCount: messages.length });
       const response = await fetch(`${endpoint}/v1/chat/completions`, {
         method: 'POST',
         headers: {
@@ -59,11 +61,13 @@ export const openClawService: AssistantService = {
         }),
       });
 
+      console.log('[OpenClaw] respuesta HTTP recibida', { status: response.status, ok: response.ok });
       if (!response.ok) {
         throw new Error('OPENCLAW_HTTP_ERROR');
       }
 
       const data: unknown = await response.json();
+      console.log('[OpenClaw] JSON recibido');
       if (!isOpenClawResponse(data)) {
         throw new Error('OPENCLAW_HTTP_ERROR');
       }
@@ -75,6 +79,7 @@ export const openClawService: AssistantService = {
 
       return content;
     } catch (error) {
+      console.error('[OpenClaw] error durante la solicitud', error);
       throw new Error(getErrorMessage(error));
     }
 };

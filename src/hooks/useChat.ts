@@ -46,21 +46,30 @@ export function useChat(service: AssistantService) {
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isGenerating || !activeConversation) return;
+    console.log('[useChat] sendMessage recibido', { contentLength: content.trim().length, isGenerating, activeConversationId: activeConversation?.id });
+    if (!content.trim() || isGenerating || !activeConversation) {
+      console.warn('[useChat] envío detenido por validación');
+      return;
+    }
     const userMessage: Message = { id: createId(), role: 'user', content: content.trim(), createdAt: new Date().toISOString() };
     const nextMessages = [...activeConversation.messages, userMessage];
+    console.log('[useChat] mensaje preparado', { messageCount: nextMessages.length });
     setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, title: conversation.messages.length ? conversation.title : content.trim().slice(0, 28), preview: content.trim(), updatedAt: 'Ahora', messages: nextMessages } : conversation));
     setIsGenerating(true);
+    console.log('[useChat] llamando a service.sendMessage');
     try {
       const response = await service.sendMessage(nextMessages);
+      console.log('[useChat] respuesta recibida del servicio', { responseLength: response.length });
       const assistantMessage: Message = { id: createId(), role: 'assistant', content: response, createdAt: new Date().toISOString() };
       setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, preview: response, updatedAt: 'Ahora', messages: [...nextMessages, assistantMessage] } : conversation));
     } catch (error) {
+      console.error('[useChat] error al llamar al servicio', error);
       const message = error instanceof Error ? error.message : 'No se pudo obtener una respuesta del asistente. Intentá nuevamente.';
       const errorMessage: Message = { id: createId(), role: 'assistant', content: message, createdAt: new Date().toISOString() };
       setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, preview: message, updatedAt: 'Ahora', messages: [...nextMessages, errorMessage] } : conversation));
     } finally {
       setIsGenerating(false);
+      console.log('[useChat] proceso de envío finalizado');
     }
   };
 
