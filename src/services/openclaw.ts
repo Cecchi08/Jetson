@@ -33,22 +33,29 @@ function getErrorMessage(error: unknown): string {
 
 export const openClawService: AssistantService = {
   async sendMessage(messages) {
-    try {
-      if (!endpoint || !token || !model) throw new Error('OPENCLAW_CONFIG_ERROR');
-      const response = await fetch(`${endpoint}/v1/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ model, messages: messages.map(({ role, content }) => ({ role, content })) }),
-      });
-      if (!response.ok) throw new Error('OPENCLAW_HTTP_ERROR');
-      const data: unknown = await response.json();
-      if (!isOpenClawResponse(data) || typeof data.choices?.[0]?.message?.content !== 'string') throw new Error('OPENCLAW_RESPONSE_ERROR');
-      return data.choices[0].message.content;
-    } catch (error) {
-      if (error instanceof Error && error.message === 'OPENCLAW_CONFIG_ERROR') {
-        throw new Error(getErrorMessage(error));
-      }
-      throw new Error(getErrorMessage(error));
+  try {
+    console.log("OPENCLAW CONFIG:", {
+      endpoint,
+      tokenPresent: Boolean(token),
+      model,
+    });
+
+    if (!endpoint || !token || !model) {
+      throw new Error('OPENCLAW_CONFIG_ERROR');
     }
-  },
+
+    const response = await fetch(`${endpoint}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: messages.map(({ role, content }) => ({
+          role,
+          content,
+        })),
+      }),
+    });
 };
