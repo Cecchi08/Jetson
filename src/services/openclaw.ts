@@ -82,4 +82,5 @@ export const openClawService: AssistantService = {
       console.error('[OpenClaw] error durante la solicitud', error);
       throw new Error(getErrorMessage(error));
     }
+  },
 };
