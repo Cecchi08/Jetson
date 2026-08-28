@@ -1,10 +1,8 @@
+version: "3.8"
+
 services:
   orion-frontend:
     build: .
-    args:
-      VITE_OPENCLAW_URL: ${VITE_OPENCLAW_URL}
-      VITE_OPENCLAW_TOKEN: ${VITE_OPENCLAW_TOKEN}
-      VITE_OPENCLAW_MODEL: ${VITE_OPENCLAW_MODEL}
     container_name: orion-frontend
     ports:
       - "8080:8080"
