@@ -46,7 +46,7 @@ services:
       - ollama
     restart: unless-stopped
 
-  backend:
+    backend:
     build: ./backend
     container_name: orion-backend
     environment:
@@ -62,10 +62,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      postgres:
-        condition: service_healthy
-      orchestrator:
-        condition: service_started
+      - postgres
+      - orchestrator
     restart: unless-stopped
 
   frontend:
