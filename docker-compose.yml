@@ -1,6 +1,7 @@
 version: '3.3'
 
 services:
+
   postgres:
     image: postgres:15-alpine
     container_name: orion-postgres
@@ -46,7 +47,7 @@ services:
       - ollama
     restart: unless-stopped
 
-    backend:
+  backend:
     build: ./backend
     container_name: orion-backend
     environment:
