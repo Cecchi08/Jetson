@@ -1,10 +1,17 @@
 import express from 'express';
 import chatRoutes from './routes/chat.js';
+import authRoutes from './routes/auth.js';
+import { verifyToken } from './middleware/auth.js';
 
 const app = express();
 
 app.use(express.json());
 
+// Rutas públicas
+app.use('/api/auth', authRoutes);
+
+// Rutas protegidas
+app.use('/api/chat', verifyToken);
 app.use('/api', chatRoutes);
 
 app.get('/health', (req, res) => {

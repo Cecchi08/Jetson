@@ -1,0 +1,5 @@
+requests==2.32.3
+ollama==0.4.7
+beautifulsoup4==4.12.3
+reportlab==4.2.5
+python-dotenv==1.0.1

@@ -1,100 +1,86 @@
-# Orion Assistant - Full Stack
+# Orion Assistant - Arquitectura Final
 
-Aplicación de chat con arquitectura completa: React, Express.js, PostgreSQL, Docker y OpenClaw.
+Aplicación web con flujo:
+
+React → Node.js/Express → Python Orquestador → Ollama/Qwen → Python → Node.js → React
 
 ## Requisitos
 
 - Docker y Docker Compose
-- Node.js 20 (opcional, solo para desarrollo local)
-- OpenClaw ejecutándose en la Jetson
+- Node.js 20 para desarrollo local
+- Python 3.11 para el orquestador
+- Ollama con el modelo `qwen2.5:14b-8k`
+- PostgreSQL solo para autenticación, no para historial de chats
 
-## Estructura del Proyecto
+## Arquitectura
 
 ```
 .
 ├── frontend/               # React + Vite + TypeScript
-│   ├── src/
-│   ├── package.json
-│   ├── Dockerfile
-│   └── ...
-├── backend/                # Node.js + Express
-│   ├── src/
-│   │   ├── app.js
-│   │   ├── index.js
-│   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── services/
-│   │   └── db/
-│   ├── package.json
-│   ├── Dockerfile
-│   └── ...
+├── backend/                # Node.js + Express API
+├── orquestrate/            # Python FastAPI orquestador
 ├── nginx/                  # Reverse proxy
-│   └── nginx.conf
-├── database/               # Esquemas PostgreSQL
-│   └── schema.sql
+├── database/               # Esquema auth / usuarios
 ├── docker-compose.yml
 ├── .env.example
-├── .gitignore
-├── .dockerignore
-└── README.md
+├── .env
+├── README.md
+└── INICIO_RAPIDO.md
 ```
 
-## Configuración Inicial
-
-### 1. Crear archivo .env
+## Configuración
 
 ```bash
 cp .env.example .env
 ```
 
-Completar con valores reales:
+Variables necesarias:
 
 ```env
-OPENCLAW_URL=http://172.15.0.202:18790
-OPENCLAW_TOKEN=tu_token_aqui
-OPENCLAW_MODEL=openclaw
-
-POSTGRES_USER=orion
-POSTGRES_PASSWORD=contraseña_segura_aqui
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
 POSTGRES_DB=orion
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=123
+
 BACKEND_PORT=3000
+JWT_SECRET=change_this_secret
+ORCHESTRATOR_URL=http://orchestrator:9080
+ORCHESTRATOR_TIMEOUT=120000
+
+GN_ID=1163
+GN_USERNAME=pruebaapi
+GN_PASSWORD=changeme
+GN_API_BASE=https://api.gruponucleosa.com
+
+OLLAMA_HOST=http://ollama:11434
+OLLAMA_MODEL=qwen2.5:14b-8k
+
+HTTP_HOST=0.0.0.0
+HTTP_PORT=9080
 ```
 
-**IMPORTANTE**: No subir `.env` a Git ni exponerlo en Internet.
+> El historial de conversación se mantiene en memoria en el backend durante la sesión actual. No se persiste en PostgreSQL.
 
-### 2. Crear la base de datos
+## Ejecutar manualmente
 
-Una vez que PostgreSQL está levantado dentro de Docker:
+### 1) Orquestador Python
 
 ```bash
-docker compose up -d postgres
-
-# Esperar a que PostgreSQL esté listo
-sleep 10
-
-# Ejecutar el schema
-docker exec -i orion-postgres psql -U orion -d orion < database/schema.sql
+cd orquestrate
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
 ```
 
-O usando psql localmente si está instalado:
+La API responde en:
 
 ```bash
-PGPASSWORD=contraseña psql -h localhost -U orion -d orion -f database/schema.sql
+http://localhost:9080/health
 ```
 
-## Ejecución
-
-### Modo Desarrollo (Frontend)
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Accedible en `http://localhost:5173`
-
-### Modo Desarrollo (Backend)
+### 2) Backend Node
 
 ```bash
 cd backend
@@ -102,81 +88,69 @@ npm install
 npm run dev
 ```
 
-El backend escucha en `http://localhost:3000`
-
-### Modo Producción (Docker Compose)
+El backend escucha en:
 
 ```bash
-# Construir e iniciar todos los servicios
-docker compose up -d --build
-
-# Ver logs
-docker compose logs -f
+http://localhost:3000
 ```
 
-La aplicación estará disponible en:
-
-```
-http://IP_DE_LA_JETSON:8080
-```
-
-## Verificaciones
-
-### 1. Frontend funciona
-
-Acceder a:
-```
-http://IP_DE_LA_JETSON:8080
-```
-
-Debería ver la interfaz de chat.
-
-### 2. Backend funciona
+### 3) Frontend
 
 ```bash
-curl http://IP_DE_LA_JETSON:8080/api/health
+cd frontend
+npm install
+npm run dev
 ```
 
-Debería retornar:
+## Verificación HTTP
+
+### Health del orquestador
+
+```bash
+curl http://localhost:9080/health
+```
+
+Debe devolver:
+
 ```json
 {"status":"ok"}
 ```
 
-### 3. PostgreSQL funciona
+### Chat con historial
 
 ```bash
-docker exec orion-postgres psql -U orion -d orion -c "SELECT version();"
-```
-
-### 4. Backend puede conectarse a PostgreSQL
-
-```bash
-docker compose logs backend
-```
-
-No debería haber errores de conexión.
-
-### 5. Backend puede conectarse a OpenClaw
-
-```bash
-curl -X POST http://IP_DE_LA_JETSON:8080/api/chat \
+curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "messages": [
-      {"role": "user", "content": "Hola"}
-    ]
+    "message": "Hola",
+    "history": []
   }'
 ```
 
-Debería retornar una respuesta de OpenClaw.
+Debe responder con un JSON tipo:
 
-### 6. Chat completo funciona
+```json
+{"response": "..."}
+```
 
-1. Abrir `http://IP_DE_LA_JETSON:8080` en el navegador
-2. Escribir un mensaje
-3. Presionar Enter
-4. Debería ver un indicador "Orion está pensando"
-5. Debería recibir una respuesta de OpenClaw
+## PostgreSQL
+
+La base de datos no guarda chats ni conversaciones. Solo debe existir la parte de autenticación y usuarios. La creación del esquema se hace manualmente por el usuario con SQL propio, sin asumir que la aplicación lo ejecute.
+
+## Docker Compose
+
+```bash
+docker compose up -d --build
+```
+
+Los servicios son:
+
+- frontend
+- backend
+- orchestrator
+- ollama
+- postgres
+- nginx
 
 ## Operaciones Comunes
 

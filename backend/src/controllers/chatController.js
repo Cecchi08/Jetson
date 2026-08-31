@@ -1,40 +1,37 @@
-import { sendToOpenClaw } from '../services/openclawService.js';
-import { persistChatConversation } from '../services/conversationService.js';
+import { callOrchestrator } from '../services/orchestratorService.js';
 
 export async function chat(req, res) {
   try {
-    const { messages } = req.body;
+    const { message, history = [] } = req.body ?? {};
 
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'messages debe ser un array no vacío' });
+    if (typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'El campo message es obligatorio' });
     }
 
-    if (!messages.every((msg) => msg.role && msg.content && typeof msg.content === 'string')) {
-      return res.status(400).json({ error: 'Cada mensaje debe tener role y content' });
+    if (!Array.isArray(history)) {
+      return res.status(400).json({ error: 'El campo history debe ser un array' });
     }
 
-    const response = await sendToOpenClaw(messages);
-
-    try {
-      await persistChatConversation(messages, response);
-      console.log('Conversación persistida en PostgreSQL');
-    } catch (dbError) {
-      console.error('No se pudo guardar la conversación:', dbError.message);
-    }
-
-    res.json({
-      message: {
-        role: 'assistant',
-        content: response,
-      },
+    const response = await callOrchestrator({
+      message: message.trim(),
+      history: history.map((item) => ({
+        role: item?.role ?? 'user',
+        content: String(item?.content ?? ''),
+      })).filter((item) => item.content.trim()),
     });
+
+    return res.status(200).json({ response });
   } catch (error) {
     console.error('Error en /api/chat:', error.message);
 
-    if (error.message.includes('OPENCLAW')) {
-      return res.status(503).json({ error: 'El asistente no está disponible' });
+    if (error?.name === 'TimeoutError') {
+      return res.status(504).json({ error: 'El orquestador tardó demasiado en responder' });
     }
 
-    res.status(500).json({ error: 'No se pudo procesar la solicitud' });
+    if (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch failed')) {
+      return res.status(503).json({ error: 'El orquestador no está disponible' });
+    }
+
+    return res.status(500).json({ error: 'No se pudo procesar la solicitud' });
   }
 }

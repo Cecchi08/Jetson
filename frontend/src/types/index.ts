@@ -16,10 +16,11 @@ export interface Conversation {
 }
 
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-  initials: string;
+  id: number;
+  username: string;
+  name?: string;
+  email?: string;
+  initials?: string;
 }
 
 export interface Assistant {

@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.8'
 
 services:
   postgres:
@@ -19,23 +19,53 @@ services:
       retries: 5
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: orion-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  orchestrator:
+    build: ./orquestrate
+    container_name: orion-orchestrator
+    environment:
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: 9080
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      GN_ID: ${GN_ID}
+      GN_USERNAME: ${GN_USERNAME}
+      GN_PASSWORD: ${GN_PASSWORD}
+      GN_API_BASE: ${GN_API_BASE}
+    ports:
+      - "9080:9080"
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
   backend:
     build: ./backend
     container_name: orion-backend
     environment:
       BACKEND_PORT: ${BACKEND_PORT}
-      OPENCLAW_URL: ${OPENCLAW_URL}
-      OPENCLAW_TOKEN: ${OPENCLAW_TOKEN}
-      OPENCLAW_MODEL: ${OPENCLAW_MODEL}
+      ORCHESTRATOR_URL: ${ORCHESTRATOR_URL}
+      ORCHESTRATOR_TIMEOUT: ${ORCHESTRATOR_TIMEOUT}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
     restart: unless-stopped
 
   frontend:
@@ -59,3 +89,4 @@ services:
 
 volumes:
   postgres_data:
+  ollama_data:

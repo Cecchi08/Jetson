@@ -1,123 +1,80 @@
-# Inicio Rápido - Orion Assistant Full Stack
+# Inicio Rápido - Orion Assistant
 
-## Requisitos Previos
+## Requisitos
 
-- Docker y Docker Compose instalados en la Jetson
-- OpenClaw ejecutándose en la Jetson (en algún puerto, ej: `http://172.15.0.202:18790`)
-- Acceso a terminal/SSH en la Jetson
+- Docker y Docker Compose
+- Node.js 20
+- Python 3.11
+- Ollama corriendo localmente o en Docker
+- PostgreSQL disponible para autenticación
 
-## Paso 1: Clonar o Descargar el Proyecto
-
-```bash
-# Asumiendo que ya estás en el directorio del proyecto
-cd /ruta/al/proyecto
-```
-
-## Paso 2: Configurar Variables de Entorno
+## 1) Configurar variables
 
 ```bash
-# Copiar plantilla
 cp .env.example .env
-
-# Editar con tus valores
 nano .env
 ```
 
-Valores necesarios:
+Usa valores similares a:
 
 ```env
-# OpenClaw (obtener del administrador)
-OPENCLAW_URL=http://172.15.0.202:18790
-OPENCLAW_TOKEN=tu_token_secreto_aqui
-OPENCLAW_MODEL=openclaw
-
-# PostgreSQL (cambiar contraseña)
-POSTGRES_USER=orion
-POSTGRES_PASSWORD=contraseña_muy_segura_aqui
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
 POSTGRES_DB=orion
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=123
 
-# Backend
 BACKEND_PORT=3000
+JWT_SECRET=change_this_secret
+ORCHESTRATOR_URL=http://orchestrator:9080
+ORCHESTRATOR_TIMEOUT=120000
+
+OLLAMA_HOST=http://ollama:11434
+OLLAMA_MODEL=qwen2.5:14b-8k
+HTTP_HOST=0.0.0.0
+HTTP_PORT=9080
 ```
 
-**⚠️ NO subir `.env` a Git**
-
-## Paso 3: Inicializar PostgreSQL
+## 2) Levantar servicios
 
 ```bash
-# Levantar solo PostgreSQL
-docker compose up -d postgres
-
-# Esperar 10 segundos a que esté listo
-sleep 10
-
-# Crear schema
-docker exec -i orion-postgres psql -U orion -d orion < database/schema.sql
-
-# Verificar que funcionó
-docker exec orion-postgres psql -U orion -d orion -c "SELECT * FROM pg_tables WHERE schemaname='public';"
-```
-
-Deberías ver:
-```
-           tablename           
------------------------------
- messages
- conversations
-```
-
-## Paso 4: Levantar Todo (Frontend, Backend, Nginx)
-
-```bash
-# Construir e iniciar todos los servicios
 docker compose up -d --build
-
-# Verificar que está todo levantado
-docker compose ps
 ```
 
-Deberías ver:
-```
-NAME                COMMAND                  STATUS
-orion-postgres      ...                      Up
-orion-backend       npm start                Up
-orion-frontend      npm run preview          Up
-orion-nginx         nginx -g daemon off;     Up
-```
-
-## Paso 5: Verificar que Funciona
-
-### 5.1 Frontend
-
-Abre en el navegador:
-```
-http://IP_DE_LA_JETSON:8080
-```
-
-Deberías ver la interfaz de chat de Orion.
-
-### 5.2 Backend
+## 3) Verificar orquestador
 
 ```bash
-# Verificar que el backend responde
-curl http://IP_DE_LA_JETSON:8080/api/health
+curl http://localhost:9080/health
 ```
 
-Deberías ver:
+Debe devolver:
+
 ```json
 {"status":"ok"}
 ```
 
-### 5.3 Base de Datos
+## 4) Verificar backend
 
 ```bash
-# Conectarse a PostgreSQL
-docker exec -it orion-postgres psql -U orion -d orion
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hola",
+    "history": []
+  }'
+```
 
-# Dentro de psql:
-SELECT COUNT(*) FROM conversations;
-SELECT COUNT(*) FROM messages;
-\q  # Salir
+## 5) Frontend
+
+Abrir en el navegador:
+
+```text
+http://localhost:8080
+```
+
+## Nota importante
+
+La base de datos no guarda conversaciones; la sesión existe solo en memoria del backend durante la conexión del usuario.
 ```
 
 ### 5.4 Chat Completo

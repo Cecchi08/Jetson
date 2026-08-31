@@ -49,8 +49,10 @@ export function useChat(service: AssistantService) {
     if (!content.trim() || isGenerating || !activeConversation) return;
     const userMessage: Message = { id: createId(), role: 'user', content: content.trim(), createdAt: new Date().toISOString() };
     const nextMessages = [...activeConversation.messages, userMessage];
+
     setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, title: conversation.messages.length ? conversation.title : content.trim().slice(0, 28), preview: content.trim(), updatedAt: 'Ahora', messages: nextMessages } : conversation));
     setIsGenerating(true);
+
     try {
       const response = await service.sendMessage(nextMessages);
       const assistantMessage: Message = { id: createId(), role: 'assistant', content: response, createdAt: new Date().toISOString() };
