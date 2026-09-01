@@ -284,29 +284,30 @@ class GrupoNucleoAPI:
         self.cotizacion = None  # se completa en main() tras consultar la API
 
     def login(self):
-    url = f"{API_BASE}/Authentication/Login"
 
-    payload = {
-        "loginModel": {
-            "id": GN_ID,
-            "username": USERNAME,
-            "password": PASSWORD
+        url = f"{API_BASE}/Authentication/Login"
+
+        payload = {
+            "loginModel": {
+                "id": GN_ID,
+                "username": USERNAME,
+                "password": PASSWORD
+            }
         }
-    }
 
-    response = requests.post(
-        url,
-        json=payload,
-        timeout=REQUEST_TIMEOUT
-    )
+        response = requests.post(
+            url,
+            json=payload,
+            timeout=REQUEST_TIMEOUT
+        )
 
-    log.info("LOGIN STATUS: %s", response.status_code)
+        log.info("LOGIN STATUS: %s", response.status_code)
 
-    response.raise_for_status()
+        response.raise_for_status()
 
-    self.token = response.text.strip().strip('"')
+        self.token = response.text.strip().strip('"')
 
-    log.info("Token obtenido correctamente.")
+        log.info("Token obtenido correctamente.")
 
     def _get_con_reintento(self, url):
 
