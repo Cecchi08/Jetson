@@ -1,17 +1,12 @@
-import path from 'node:path';
 import pg from 'pg';
-import dotenv from 'dotenv';
-
-const envPath = path.resolve(process.cwd(), '..', '.env');
-dotenv.config({ path: envPath });
 
 const { Pool } = pg;
 
 const pool = new Pool({
-  host: process.env.POSTGRES_HOST,
+  host: process.env.POSTGRES_HOST || 'postgres',
   port: Number(process.env.POSTGRES_PORT || 5432),
-  database: process.env.POSTGRES_DB,
-  user: process.env.POSTGRES_USER,
+  database: process.env.POSTGRES_DB || 'orion',
+  user: process.env.POSTGRES_USER || 'postgres',
   password: String(process.env.POSTGRES_PASSWORD || ''),
   max: 10,
   idleTimeoutMillis: 30000,
@@ -20,8 +15,16 @@ const pool = new Pool({
 
 export async function testDatabaseConnection() {
   const client = await pool.connect();
+
   try {
-    const result = await client.query('SELECT NOW()');
+    const result = await client.query(`
+      SELECT
+        current_database(),
+        current_schema()
+    `);
+
+    console.log('Base de datos:', result.rows[0]);
+
     return result.rows[0];
   } finally {
     client.release();
