@@ -288,10 +288,12 @@ class GrupoNucleoAPI:
         url = f"{API_BASE}/Authentication/Login"
 
         payload = {
+            "loginModel": {
             "id": GN_ID,
             "username": USERNAME,
             "password": PASSWORD
         }
+    }
 
         response = requests.post(url, json=payload, timeout=REQUEST_TIMEOUT)
 
