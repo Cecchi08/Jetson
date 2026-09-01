@@ -25,7 +25,7 @@ services:
     container_name: orion-orchestrator
     environment:
       HTTP_HOST: 0.0.0.0
-      HTTP_PORT: 9080
+      HTTP_PORT: 9081
       OLLAMA_HOST: http://host.docker.internal:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL}
       GN_ID: ${GN_ID}
@@ -35,7 +35,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "9080:9080"
+      - "9081:9081"
     restart: unless-stopped
 
   backend:

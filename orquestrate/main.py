@@ -64,7 +64,7 @@ REQUEST_TIMEOUT = 20
 OLLAMA_TIMEOUT_RETRIES = 2
 
 HTTP_HOST = os.getenv("HTTP_HOST", "0.0.0.0")
-HTTP_PORT = int(os.getenv("HTTP_PORT", "9080"))
+HTTP_PORT = int(os.getenv("HTTP_PORT", "9081"))
 
 PDF_FOLDER = "pdf_generados"
 
