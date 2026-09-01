@@ -25,7 +25,7 @@ import ollama
 from bs4 import BeautifulSoup
 import hashlib
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException  
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
