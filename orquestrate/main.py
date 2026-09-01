@@ -294,10 +294,6 @@ class GrupoNucleoAPI:
         }
     }
 
-    log.info("LOGIN URL: %s", url)
-    log.info("LOGIN ID TYPE: %s", type(GN_ID).__name__)
-    log.info("LOGIN USERNAME: %s", USERNAME)
-
     response = requests.post(
         url,
         json=payload,
@@ -305,7 +301,6 @@ class GrupoNucleoAPI:
     )
 
     log.info("LOGIN STATUS: %s", response.status_code)
-    log.info("LOGIN RESPONSE: %s", response.text)
 
     response.raise_for_status()
 
