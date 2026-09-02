@@ -637,7 +637,7 @@ def es_motherboard(producto):
 
 def es_cpu(producto):
     """
-    Detecta si realmente es un procesador.
+    Detecta si realmente es un procesador (CPU).
 
     Ryzen/Intel por sí solos no convierten cualquier producto
     en CPU. Se exige además que el producto tenga indicadores
@@ -972,6 +972,28 @@ def producto_cumple_familia_cpu(producto, familia_cpu):
 # FILTRO DE TÉRMINOS OBLIGATORIOS
 # ============================================================
 
+# Palabras comunes que no aportan a la identificación del producto
+palabras_excluidas = {
+    "para",
+    "de",
+    "del",
+    "la",
+    "el",
+    "los",
+    "las",
+    "un",
+    "una",
+    "con",
+    "que",
+    "quiero",
+    "dame",
+    "buscar",
+    "busco",
+    "necesito",
+    "mostrame",
+    "mostrar",
+}
+
 def producto_contiene_todos_los_terminos(producto, consulta):
     """
     En modo SOLO, todos los términos relevantes de la consulta
@@ -985,27 +1007,6 @@ def producto_contiene_todos_los_terminos(producto, consulta):
     """
 
     texto = texto_producto(producto)
-
-    palabras_excluidas = {
-        "para",
-        "de",
-        "del",
-        "la",
-        "el",
-        "los",
-        "las",
-        "un",
-        "una",
-        "con",
-        "que",
-        "quiero",
-        "dame",
-        "buscar",
-        "busco",
-        "necesito",
-        "mostrame",
-        "mostrar",
-    }
 
     terminos = [
         token
@@ -1022,6 +1023,34 @@ def producto_contiene_todos_los_terminos(producto, consulta):
 
     return True
 
+def producto_coincide_exacto(consulta, catalogo):
+    """
+    Encuentra productos cuyo nombre coincide exactamente con los términos de la consulta.
+    
+    Cuando se usa "solo", se busca el producto cuyo nombre normalizado
+    contenga exactamente los términos de la consulta (sin palabras de paraguas).
+    """
+    # Extraer términos de la consulta (sin palabras de paraguas)
+    consulta_normalizada = normalizar(consulta)
+    terminos = [token for token in tokens(consulta_normalizada) if token not in palabras_excluidas]
+    
+    # Buscar productos cuyo nombre coincida exactamente
+    resultados = []
+    for producto in catalogo:
+        # Usar el nombre normalizado del producto
+        nombre_normalizado = normalizar(producto.get("item_desc_0", ""))
+        
+        # Verificar si el nombre coincide con los términos de la consulta
+        coincidencia = True
+        for termino in terminos:
+            if not re.search(rf"\b{re.escape(termino)}\b", nombre_normalizado):
+                coincidencia = False
+                break
+        
+        if coincidencia:
+            resultados.append(producto)
+    
+    return resultados
 
 # ============================================================
 # BÚSQUEDA INTELIGENTE
@@ -1143,6 +1172,32 @@ def buscar_productos(consulta, catalogo):
     # ========================================================
     # RECORRER CATÁLOGO
     # ========================================================
+
+    # En modo SOLO, usar búsqueda exacta del nombre
+    if es_solo:
+        # Cuando se usa "solo", buscamos coincidencia exacta del nombre del producto
+        # y retornamos directamente los productos resumidos
+        productos_exactos = producto_coincide_exacto(consulta_original, catalogo)
+        # Ordenar los resultados para mantener consistencia
+        productos_finales = []
+        vistos = set()
+        for producto in productos_exactos:
+            identificador = (
+                producto.get("item_id")
+                or producto.get("codigo")
+                or producto.get("partNumber")
+            )
+            if identificador in vistos:
+                continue
+            vistos.add(identificador)
+            productos_finales.append(resumir_producto(producto))
+        
+        log.info(
+            "Productos finales encontrados (SOLO exacto): %s | Solo=%s",
+            len(productos_finales),
+            es_solo,
+        )
+        return productos_finales
 
     resultados = []
 
