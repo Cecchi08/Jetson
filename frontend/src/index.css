@@ -95,3 +95,12 @@ kbd { margin-left: auto; padding: 2px 5px; border: 1px solid rgba(16, 36, 38, .2
 @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } } @keyframes pulse { 50% { opacity: .25; transform: translateY(-2px); } } @keyframes blink { 50% { opacity: 0; } }
 @media (max-width: 700px) { .sidebar { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); transform: translateX(-105%); transition: transform .25s ease; box-shadow: 16px 0 40px rgba(0,0,0,.25); }.sidebar--open { transform: translateX(0); }.sidebar__close, .menu-button { display: grid; }.chat-header { height: 64px; padding: 0 16px; }.menu-button { margin-right: 10px; }.chat-header > .icon-button:last-child { margin-left: auto; }.chat-body { padding: 36px 18px 20px; }.welcome { margin-bottom: 38px; }.welcome h2 { font-size: 44px; }.message-content { max-width: calc(100% - 44px); }.composer-wrap { padding: 12px 14px 18px; }.composer-note { font-size: 8px; }.conversation__time { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+.pdf-link {
+  display: inline-block;
+  margin: 8px 0;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}

@@ -25,7 +25,9 @@ services:
     container_name: orion-orchestrator
     environment:
       HTTP_HOST: 0.0.0.0
-      HTTP_PORT: 9081
+      HTTP_PORT: 9080
+      PDF_PORT: 9081
+      PDF_PUBLIC_BASE_URL: ${PDF_PUBLIC_BASE_URL:-}
       OLLAMA_HOST: http://host.docker.internal:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL}
       GN_ID: ${GN_ID}
@@ -35,7 +37,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "9081:9081"
+      - "9081:9081"   # Servidor de PDFs accesible en el host (ej: http://172.15.0.202:9081/pdfs/)
     restart: unless-stopped
 
   backend:
@@ -45,6 +47,7 @@ services:
       BACKEND_PORT: ${BACKEND_PORT}
       ORCHESTRATOR_URL: ${ORCHESTRATOR_URL}
       ORCHESTRATOR_TIMEOUT: ${ORCHESTRATOR_TIMEOUT}
+      PDF_PORT: ${PDF_PORT:-9081}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
