@@ -804,7 +804,7 @@ def producto_es_tipo(producto, tipo):
     texto = texto_producto(producto)
 
     if tipo == "pc":
-        return (
+        es_computadora = (
             "comput" in categoria
             or "comput" in subcategoria
             or categoria == "pc"
@@ -813,10 +813,25 @@ def producto_es_tipo(producto, tipo):
             or "pc gamer" in nombre
             or "equipo gamer" in nombre
             or "todo en uno" in nombre
+            or "all in one" in nombre
+            or "desktop" in categoria
+            or "desktop" in subcategoria
+            or re.search(r"\bdesktop\b", nombre) is not None
+            or "computadora" in nombre
+        )
+
+        palabras_accesorio = (
+            "mochila", "funda", "bolso", "maletin", "soporte", "base",
+            "cooler", "cargador", "mouse", "teclado", "pad",
+            "estabilizador", "cable", "adaptador",
+        )
+        return es_computadora and not any(
+            re.search(rf"\b{re.escape(palabra)}\b", nombre)
+            for palabra in palabras_accesorio
         )
 
     if tipo == "notebook":
-        return (
+        es_notebook = (
             "notebook" in categoria
             or "notebook" in subcategoria
             or "laptop" in categoria
@@ -824,6 +839,18 @@ def producto_es_tipo(producto, tipo):
             or re.search(r"\bnotebook\b", nombre) is not None
             or re.search(r"\blaptop\b", nombre) is not None
         )
+
+        palabras_accesorio = (
+            "mochila", "funda", "bolso", "maletin", "soporte", "base",
+            "cooler", "cargador", "mouse", "teclado", "pad",
+            "estabilizador", "cable", "adaptador", "bateria externa",
+        )
+        es_accesorio = any(
+            re.search(rf"\b{re.escape(palabra)}\b", nombre)
+            for palabra in palabras_accesorio
+        )
+
+        return es_notebook and not es_accesorio
 
     if tipo == "monitor":
         return (
