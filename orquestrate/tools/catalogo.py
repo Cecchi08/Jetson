@@ -17,9 +17,12 @@ Por ahora NO utiliza los archivos Excel de categorías/subcategorías.
 """
 
 import logging
+import hashlib
+import os
 import re
 
 log = logging.getLogger("asistente")
+MAX_SEARCH_RESULTS = int(os.getenv("MAX_SEARCH_RESULTS", "50"))
 
 
 # ============================================================
@@ -290,24 +293,6 @@ def detectar_categoria_consulta(consulta):
     if any(palabra in q for palabra in motherboard_palabras):
         return "motherboard"
 
-    cpu_palabras = [
-        "micro",
-        "microprocesador",
-        "procesador",
-        "cpu",
-        "ryzen",
-        "core i3",
-        "core i5",
-        "core i7",
-        "core i9",
-        "core ultra",
-        "intel",
-        "amd",
-    ]
-
-    if any(palabra in q for palabra in cpu_palabras):
-        return "cpu"
-
     gpu_palabras = [
         "placa de video",
         "placa video",
@@ -321,6 +306,23 @@ def detectar_categoria_consulta(consulta):
 
     if any(palabra in q for palabra in gpu_palabras):
         return "gpu"
+
+    cpu_palabras = [
+        "micro",
+        "microprocesador",
+        "procesador",
+        "cpu",
+        "ryzen",
+        "core i3",
+        "core i5",
+        "core i7",
+        "core i9",
+        "core ultra",
+        "intel",
+    ]
+
+    if any(palabra in q for palabra in cpu_palabras):
+        return "cpu"
 
     ram_palabras = [
         "ram",
@@ -654,11 +656,29 @@ def es_cpu(producto):
         producto.get("subcategoria", "")
     )
 
+    categoria_cpu = (
+        "micro" in categoria
+        or "procesador" in categoria
+        or "cpu" in categoria
+        or "micro" in subcategoria
+        or "procesador" in subcategoria
+        or "cpu" in subcategoria
+    )
+
+    nombre = canonizar_terminos(producto.get("item_desc_0", ""))
+    producto_compuesto = (
+        "notebook" in categoria
+        or "laptop" in categoria
+        or "comput" in categoria
+        or "notebook" in subcategoria
+        or "laptop" in subcategoria
+        or "comput" in subcategoria
+        or re.search(r"\b(?:notebook|laptop|pc)\b", nombre) is not None
+    )
+
     patrones_cpu = [
         "procesador",
         "microprocesador",
-        "micro amd",
-        "micro intel",
         "cpu",
         "ryzen",
         "core i3",
@@ -668,32 +688,19 @@ def es_cpu(producto):
         "core ultra",
     ]
 
-    if any(p in texto for p in patrones_cpu):
-        return True
+    if producto_compuesto:
+        return False
 
-    if "micro" in categoria:
-        return True
-
-    if "procesador" in categoria:
-        return True
-
-    if "cpu" in categoria:
-        return True
-
-    if "micro" in subcategoria:
-        return True
-
-    if "procesador" in subcategoria:
-        return True
-
-    if "cpu" in subcategoria:
-        return True
-
-    return False
+    return categoria_cpu or any(
+        re.search(rf"\b{re.escape(patron)}\b", texto)
+        for patron in patrones_cpu
+    )
 
 
 def es_gpu(producto):
     texto = texto_producto(producto)
+    categoria = canonizar_terminos(producto.get("categoria", ""))
+    subcategoria = canonizar_terminos(producto.get("subcategoria", ""))
 
     patrones = [
         "placa de video",
@@ -705,7 +712,10 @@ def es_gpu(producto):
         "rx",
     ]
 
-    return any(p in texto for p in patrones)
+    return any(
+        re.search(rf"\b{re.escape(patron)}\b", texto)
+        for patron in patrones
+    ) or "video" in categoria or "video" in subcategoria
 
 
 def es_almacenamiento(producto):
@@ -1122,6 +1132,9 @@ def buscar_productos(consulta, catalogo):
 
     familia_cpu = detectar_familia_cpu(q)
 
+    if categoria_consulta == "gpu":
+        familia_cpu = None
+
     ddr_filtro = detectar_ddr(q)
 
     socket_filtro = detectar_socket(q)
@@ -1464,11 +1477,7 @@ def buscar_productos(consulta, catalogo):
                 tokens_encontrados / len(q_tokens)
             )
 
-            if (
-                len(q_tokens) >= 2
-                and porcentaje < 0.5
-                and not es_solo
-            ):
+            if len(q_tokens) >= 2 and porcentaje < 0.75 and not es_solo:
                 continue
 
         # ====================================================
@@ -1506,14 +1515,25 @@ def buscar_productos(consulta, catalogo):
             or producto.get("partNumber")
         )
 
+        if not identificador:
+            identificador = hashlib.sha1(
+                "|".join([
+                    str(producto.get("item_desc_0", "")),
+                    str(producto.get("item_desc_1", "")),
+                    str(producto.get("marca", "")),
+                    str(producto.get("precioNeto_USD", "")),
+                ]).encode("utf-8")
+            ).hexdigest()
+
         if identificador in vistos:
             continue
 
         vistos.add(identificador)
 
-        productos_finales.append(
-            resumir_producto(producto)
-        )
+        productos_finales.append(resumir_producto(producto))
+
+        if len(productos_finales) >= MAX_SEARCH_RESULTS:
+            break
 
     log.info(
         "Productos finales encontrados: %s | Solo=%s | "

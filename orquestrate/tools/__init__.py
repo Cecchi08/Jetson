@@ -19,7 +19,7 @@ from .catalogo import (
 from .pdf import generar_pdf_productos
 from .chat import (
     detectar_intencion, generar_respuesta, SesionChat,
-    resolver_consulta_con_contexto
+    resolver_consulta_con_contexto, generar_respuesta_productos
 )
 
 __all__ = [
@@ -53,4 +53,5 @@ __all__ = [
     "generar_respuesta",
     "SesionChat",
     "resolver_consulta_con_contexto",
+    "generar_respuesta_productos",
 ]
