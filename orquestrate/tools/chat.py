@@ -5,28 +5,51 @@ Detección de intención, generación de respuestas y procesamiento de mensajes.
 
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 
 import ollama
+from dotenv import load_dotenv
+
+load_dotenv()
 
 log = logging.getLogger("asistente")
 
-OLLAMA_MODEL = "qwen2.5:14b-8k"
-OLLAMA_TIMEOUT_RETRIES = 2
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:14b-8k")
+OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "90"))
+OLLAMA_TIMEOUT_RETRIES = int(os.getenv("OLLAMA_TIMEOUT_RETRIES", "2"))
+OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
+OLLAMA_NUM_PREDICT = int(os.getenv("OLLAMA_NUM_PREDICT", "512"))
+OLLAMA_TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0"))
+OLLAMA_TOP_P = float(os.getenv("OLLAMA_TOP_P", "0.1"))
+OLLAMA_SEED = int(os.getenv("OLLAMA_SEED", "42"))
+
+_ollama = ollama.Client(host=OLLAMA_HOST, timeout=OLLAMA_TIMEOUT)
 
 
-def _chat_ollama(prompt, num_ctx):
+def _chat_ollama(prompt, num_ctx, output_format=None):
     """Envía un prompt a Ollama y obtiene la respuesta."""
     ultimo_error = None
 
     for intento in range(1 + OLLAMA_TIMEOUT_RETRIES):
         try:
-            respuesta = ollama.chat(
-                model=OLLAMA_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                options={"num_ctx": num_ctx}
-            )
+            kwargs = {
+                "model": OLLAMA_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "options": {
+                    "num_ctx": num_ctx,
+                    "num_predict": OLLAMA_NUM_PREDICT,
+                    "temperature": OLLAMA_TEMPERATURE,
+                    "top_p": OLLAMA_TOP_P,
+                    "seed": OLLAMA_SEED,
+                },
+            }
+            if output_format:
+                kwargs["format"] = output_format
+
+            respuesta = _ollama.chat(**kwargs)
 
             contenido = respuesta["message"].get("content", "").strip()
 
@@ -43,7 +66,8 @@ def _chat_ollama(prompt, num_ctx):
             intento + 1, OLLAMA_TIMEOUT_RETRIES + 1, ultimo_error
         )
 
-        time.sleep(1)
+        if intento < OLLAMA_TIMEOUT_RETRIES:
+            time.sleep(1)
 
     raise RuntimeError("Ollama no respondió: " + str(ultimo_error))
 
@@ -58,24 +82,28 @@ Analizá el mensaje del usuario y devolvé
 NO uses markdown.
 NO expliques nada.
 
-Formato:
+    def validar_intencion(valor):
+        acciones_validas = {"buscar", "precio", "stock", "web", "conversacion"}
+        if not isinstance(valor, dict):
+            raise ValueError("La intención no es un objeto JSON")
+        if valor.get("accion") not in acciones_validas:
+            raise ValueError("Acción de intención inválida")
+        if not isinstance(valor.get("consulta", ""), str):
+            raise ValueError("Consulta de intención inválida")
+        return valor
 
-{
+    try:
+        return validar_intencion(json.loads(contenido))
+    except (json.JSONDecodeError, ValueError):
   "accion": "buscar" | "precio" | "stock" | "web" | "conversacion",
   "consulta": "texto de búsqueda"
 }
 
 REGLAS IMPORTANTES:
-
-buscar:
-El usuario quiere saber qué productos tenemos.
-
-precio:
-El usuario quiere saber cuánto cuesta uno
-o varios productos.
-
-stock:
-El usuario pregunta cuántas unidades hay.
+                return validar_intencion(
+                    json.loads(contenido[inicio:fin + 1])
+                )
+            except (json.JSONDecodeError, ValueError):
 
 web:
 SOLO usar para información que NO provenga
@@ -206,13 +234,21 @@ MENSAJE DEL USUARIO:
 """ + mensaje
 
     try:
-        contenido = _chat_ollama(prompt, num_ctx=8192)
+        contenido = _chat_ollama(prompt, num_ctx=OLLAMA_NUM_CTX, output_format="json")
     except RuntimeError as e:
         log.error("detectar_intencion: %s", e)
         return {"accion": "buscar", "consulta": mensaje}
 
     try:
-        return json.loads(contenido)
+        resultado = json.loads(contenido)
+        acciones_validas = {"buscar", "precio", "stock", "web", "conversacion"}
+        if not isinstance(resultado, dict):
+            raise ValueError("La intención no es un objeto JSON")
+        if resultado.get("accion") not in acciones_validas:
+            raise ValueError("Acción de intención inválida")
+        if not isinstance(resultado.get("consulta", ""), str):
+            raise ValueError("Consulta de intención inválida")
+        return resultado
     except json.JSONDecodeError:
         inicio = contenido.find("{")
         fin = contenido.rfind("}")
@@ -332,7 +368,7 @@ Generá únicamente la respuesta final.
 """
 
     try:
-        return _chat_ollama(prompt, num_ctx=8192)
+        return _chat_ollama(prompt, num_ctx=OLLAMA_NUM_CTX)
     except RuntimeError as e:
         log.error("generar_respuesta: %s", e)
         return "Perdón, tuve un problema para generar la respuesta."
@@ -376,3 +412,36 @@ def resolver_consulta_con_contexto(consulta, sesion):
             return sesion.ultimos_productos[0]["nombre"]
 
     return consulta
+
+
+def generar_respuesta_productos(mensaje, productos, accion):
+    """Construye la respuesta comercial sin regenerar datos con el modelo."""
+    if not productos:
+        return "No encontré productos que coincidan exactamente con la consulta."
+
+    lineas = []
+    for producto in productos:
+        lineas.extend([
+            f"SKU: {producto.get('sku', '')}",
+            f"Descripción: {producto.get('nombre', '')}",
+            f"Valor: USD ${_formatear_numero(producto.get('precio_usd', 0))}",
+            f"Stock MDP: {_formatear_entero(producto.get('stock_mdp', 0))} unidades",
+            f"Stock CABA: {_formatear_entero(producto.get('stock_caba', 0))} unidades",
+            "",
+        ])
+
+    return "\n".join(lineas).rstrip()
+
+
+def _formatear_numero(valor):
+    try:
+        return f"{float(valor):,.2f}"
+    except (TypeError, ValueError):
+        return "0.00"
+
+
+def _formatear_entero(valor):
+    try:
+        return str(int(float(valor)))
+    except (TypeError, ValueError):
+        return "0"

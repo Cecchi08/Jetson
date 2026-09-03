@@ -1,384 +1,4 @@
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line
-
-13:01:11 [ERROR] Error procesando mensaje: EOF when reading a line
-Tú: Error: EOF when reading a line"""
+"""
 Asistente IA interno — Grupo Núcleo.
 hola
 Combina:
@@ -424,6 +44,7 @@ from tools import (
     generar_pdf_productos,
     detectar_intencion,
     generar_respuesta,
+    generar_respuesta_productos,
     SesionChat,
     resolver_consulta_con_contexto,
 )
@@ -435,6 +56,7 @@ from tools import (
 HTTP_HOST = "0.0.0.0"
 HTTP_PORT = 9080
 PDF_FOLDER = "pdf_generados"
+MAX_PDF_PRODUCTS = int(os.getenv("MAX_PDF_PRODUCTS", "100"))
 
 # ============================================================
 # LOGGING
@@ -731,14 +353,15 @@ def procesar_mensaje(mensaje, api, sesion):
         # PDF
         pdf_generado = None
 
-        if len(resultados) >= 3:
+        if len(resultados) >= 3 and os.getenv("ENABLE_PRODUCT_PDF", "true").lower() == "true":
             log.info(
                 "Hay %s productos. Generando comparativa PDF...",
                 len(resultados)
             )
 
+            productos_pdf = resultados[:MAX_PDF_PRODUCTS]
             pdf_generado = generar_pdf_productos(
-                resultados,
+                productos_pdf,
                 consulta,
                 api.cotizacion,
             )
@@ -750,20 +373,17 @@ def procesar_mensaje(mensaje, api, sesion):
 
             respuesta = (
                 "Preparé una comparativa "
-                f"con {len(resultados)} productos.\n\n"
+                f"con {len(productos_pdf)} productos.\n\n"
                 "Podés descargarla acá:\n"
                 f"{enlace_pdf}"
             )
 
         else:
-            datos = {
-                "accion": accion,
-                "consulta": consulta,
-                "cantidad_resultados": len(resultados),
-                "productos": resultados
-            }
-
-            respuesta = generar_respuesta(mensaje, datos, sesion.historial)
+            respuesta = generar_respuesta_productos(
+                mensaje,
+                resultados,
+                accion,
+            )
 
     # MEMORIA
     sesion.registrar_turno(mensaje, respuesta)

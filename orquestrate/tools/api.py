@@ -4,15 +4,19 @@ Autenticación y acceso al catálogo de productos.
 """
 
 import logging
+import os
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 log = logging.getLogger("asistente")
 
-API_BASE = "https://api.gruponucleosa.com"
-GN_ID = 1163
-USERNAME = "pruebaapi"
-PASSWORD = "123456789"
-REQUEST_TIMEOUT = 20
+API_BASE = os.getenv("GN_API_BASE", "https://api.gruponucleosa.com")
+GN_ID = int(os.getenv("GN_ID", "1163"))
+USERNAME = os.getenv("GN_USERNAME", "")
+PASSWORD = os.getenv("GN_PASSWORD", "")
+REQUEST_TIMEOUT = float(os.getenv("GN_REQUEST_TIMEOUT", "20"))
 
 
 class GrupoNucleoAPI:
@@ -25,6 +29,9 @@ class GrupoNucleoAPI:
 
     def login(self):
         """Autentica el usuario y obtiene el token."""
+        if not USERNAME or not PASSWORD:
+            raise RuntimeError("Faltan GN_USERNAME o GN_PASSWORD")
+
         url = f"{API_BASE}/Authentication/Login"
 
         payload = {
