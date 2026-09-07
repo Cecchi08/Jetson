@@ -37,7 +37,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "9081:9081"   # Servidor de PDFs accesible en el host (ej: http://172.15.0.202:9081/pdfs/)
+      - "9080:9080"
     restart: unless-stopped
 
   backend:
