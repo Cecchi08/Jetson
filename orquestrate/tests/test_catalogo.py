@@ -58,6 +58,36 @@ class CatalogoTest(unittest.TestCase):
             ["Monitor A", "Monitor B"],
         )
 
+    def test_filtro_estructurado_respecta_cantidad_y_tipo_pc(self):
+        catalogo = [
+            producto("pc1", "PC1", "Computadora de escritorio Ryzen 5", "Computadoras", "PC", marca="AMD"),
+            producto("pc2", "PC2", "Computadora gaming Intel i5", "Computadoras", "PC", marca="Intel"),
+            producto("pc3", "PC3", "Computadora All in One", "Computadoras", "PC", marca="Lenovo"),
+            producto("pc4", "PC4", "Mochila para notebook", "Accesorios", "Mochila", marca="N/A"),
+            producto("pc5", "PC5", "CPU Ryzen 5 5600", "Procesadores", "CPU", marca="AMD"),
+        ]
+        resultados = buscar_productos(catalogo, tipo="pc", cantidad=2, stock=True, solo=True)
+        self.assertEqual(len(resultados), 2)
+        self.assertTrue(all(item["sku"] in {"PC1", "PC2", "PC3"} for item in resultados))
+
+    def test_filtro_estructurado_cpu_con_marca_e_intel(self):
+        catalogo = [
+            producto("cpu1", "CPU1", "Procesador Intel Core i5", "Procesadores", "CPU", marca="Intel"),
+            producto("cpu2", "CPU2", "Procesador AMD Ryzen 5", "Procesadores", "CPU", marca="AMD"),
+            producto("cpu3", "CPU3", "Notebook Lenovo Yoga", "Notebooks", "Notebook", marca="Lenovo"),
+        ]
+        resultados = buscar_productos(catalogo, categoria="cpu", marca="Intel", cantidad=5, stock=True, solo=True)
+        self.assertEqual([item["sku"] for item in resultados], ["CPU1"])
+
+    def test_filtro_estructurado_ram_ddr5(self):
+        catalogo = [
+            producto("ram1", "RAM1", "Memoria RAM DDR5 16GB", "Memorias", "Memoria", marca="Kingston"),
+            producto("ram2", "RAM2", "Memoria SD 128GB", "Memorias", "Memoria SD", marca="SanDisk"),
+            producto("ram3", "RAM3", "Memoria RAM DDR4 8GB", "Memorias", "Memoria", marca="Corsair"),
+        ]
+        resultados = buscar_productos(catalogo, categoria="ram", ddr="DDR5", cantidad=3, stock=True, solo=True)
+        self.assertEqual([item["sku"] for item in resultados], ["RAM1"])
+
 
 if __name__ == "__main__":
     unittest.main()

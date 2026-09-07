@@ -2132,190 +2132,103 @@ def _chat_ollama(prompt, num_ctx):
 def detectar_intencion(mensaje):
 
     prompt = """
-
-Analizá el mensaje del usuario y devolvé
-ÚNICAMENTE JSON válido.
-
-NO uses markdown.
-NO expliques nada.
-
-Formato:
-
+Devolvé ÚNICAMENTE JSON válido con esta forma:
 {
-  "accion": "buscar" | "precio" | "stock" | "web" | "conversacion",
-  "consulta": "texto de búsqueda"
+  "accion": "buscar_productos",
+  "categoria": null,
+  "tipo": null,
+  "marca": null,
+  "familia": null,
+  "ddr": null,
+  "socket": null,
+  "cantidad": 5,
+  "stock": true,
+  "solo": true
 }
 
-REGLAS IMPORTANTES:
+Reglas:
+- accion: buscar_productos | precio | stock | web | conversacion
+- categoria: cpu | gpu | ram | almacenamiento | fuente | motherboard | null
+- tipo: pc | notebook | monitor | teclado | mouse | gamepad | joystick | mochila | auricular | parlante | webcam | null
+- marca: nombre concreto, o null
+- familia: Ryzen 5, Core i5, etc., o null
+- ddr: DDR3 | DDR4 | DDR5 | null
+- socket: AM4 | AM5 | LGA1700 | null
+- cantidad: entero si lo pide el usuario; si no, usa null o un valor razonable
+- stock: true | false | null
+- solo: true cuando pide exclusivamente ese tipo/categoria
 
-buscar:
-El usuario quiere saber qué productos tenemos.
+Ejemplos:
+- "Dame 5 computadoras" -> {"accion":"buscar_productos","categoria":null,"tipo":"pc","marca":null,"familia":null,"ddr":null,"socket":null,"cantidad":5,"stock":true,"solo":true}
+- "Dame 10 notebooks Lenovo" -> {"accion":"buscar_productos","categoria":null,"tipo":"notebook","marca":"Lenovo","familia":null,"ddr":null,"socket":null,"cantidad":10,"stock":true,"solo":true}
+- "Dame 5 procesadores Ryzen 5" -> {"accion":"buscar_productos","categoria":"cpu","tipo":null,"marca":"AMD","familia":"Ryzen 5","ddr":null,"socket":null,"cantidad":5,"stock":true,"solo":true}
+- "Dame procesadores Intel" -> {"accion":"buscar_productos","categoria":"cpu","tipo":null,"marca":"Intel","familia":null,"ddr":null,"socket":null,"cantidad":null,"stock":true,"solo":true}
+- "Dame 3 memorias DDR5" -> {"accion":"buscar_productos","categoria":"ram","tipo":null,"marca":null,"familia":null,"ddr":"DDR5","socket":null,"cantidad":3,"stock":true,"solo":true}
+- "hola" -> {"accion":"conversacion","categoria":null,"tipo":null,"marca":null,"familia":null,"ddr":null,"socket":null,"cantidad":null,"stock":null,"solo":true}
 
-precio:
-El usuario quiere saber cuánto cuesta uno
-o varios productos.
-
-stock:
-El usuario pregunta cuántas unidades hay.
-
-web:
-SOLO usar para información que NO provenga
-del catálogo de la empresa y que requiera Internet,
-actualidad o información cambiante.
-
-Ejemplos de web:
-- partidos de fútbol
-- resultados deportivos
-- noticias
-- clima
-- presidente actual
-- eventos actuales
-- información de personas
-- horarios actuales
-
-MUY IMPORTANTE:
-
-Si el usuario pregunta por PRODUCTOS de la empresa,
-SIEMPRE usá "buscar", "precio" o "stock".
-
-NO uses "web" para buscar productos.
-
-Por ejemplo:
-
-"lista de motherboards AM5"
-=> buscar
-
-"que mothers AM5 tenemos"
-=> buscar
-
-"mostrame micros Ryzen 5"
-=> buscar
-
-"que placas de video RTX tenemos"
-=> buscar
-
-"cuanto sale una motherboard AM5"
-=> precio
-
-"cuantas motherboards AM5 tenemos"
-=> stock
-
-"contra quien juega Boca hoy"
-=> web
-
-"cuando juega River"
-=> web
-
-"quien es el presidente actual"
-=> web
-
-IMPORTANTE:
-
-Palabras como "hoy", "ahora" o "actualmente"
-NO convierten automáticamente una consulta de
-producto en web.
-
-Si se habla de un producto del catálogo,
-seguí usando catálogo.
-
-Ejemplo:
-
-"que mothers AM5 tenemos hoy"
-=> buscar
-
-"que micros Ryzen tenemos actualmente"
-=> buscar
-
-EJEMPLOS:
-
-Usuario:
-que memorias ram ddr5 tenemos
-
-Respuesta:
-{"accion":"buscar","consulta":"memorias ram ddr5"}
-
-Usuario:
-cuantos ryzen 7 7700x tenemos
-
-Respuesta:
-{"accion":"stock","consulta":"ryzen 7 7700x"}
-
-Usuario:
-cuanto sale el ryzen 7 7700x
-
-Respuesta:
-{"accion":"precio","consulta":"ryzen 7 7700x"}
-
-Usuario:
-lista de motherboards am5
-
-Respuesta:
-{"accion":"buscar","consulta":"motherboards am5"}
-
-Usuario:
-que mothers am5 tenemos
-
-Respuesta:
-{"accion":"buscar","consulta":"motherboards am5"}
-
-Usuario:
-contra quien juega boca hoy
-
-Respuesta:
-{"accion":"web","consulta":"Boca Juniors partido hoy"}
-
-Usuario:
-cuando juega river
-
-Respuesta:
-{"accion":"web","consulta":"River Plate próximo partido"}
-
-Usuario:
-quien es el presidente de argentina
-
-Respuesta:
-{"accion":"web","consulta":"presidente de Argentina actual"}
-
-Usuario:
-hola
-
-Respuesta:
-{"accion":"conversacion","consulta":""}
-
+NO devuelvas texto fuera del JSON.
 MENSAJE DEL USUARIO:
-
 """ + mensaje
 
     try:
-
         contenido = _chat_ollama(prompt, num_ctx=8192)
-
     except RuntimeError as e:
-
         log.error("detectar_intencion: %s", e)
-
-        return {"accion": "buscar", "consulta": mensaje}
+        return {
+            "accion": "buscar_productos",
+            "categoria": None,
+            "tipo": None,
+            "marca": None,
+            "familia": None,
+            "ddr": None,
+            "socket": None,
+            "cantidad": None,
+            "stock": True,
+            "solo": True,
+        }
 
     try:
-
-        return json.loads(contenido)
-
-    except json.JSONDecodeError:
-
+        resultado = json.loads(contenido)
+        if not isinstance(resultado, dict):
+            raise ValueError("La intención no es un objeto JSON")
+        campos = ["accion", "categoria", "tipo", "marca", "familia", "ddr", "socket", "cantidad", "stock", "solo"]
+        for campo in campos:
+            if campo not in resultado:
+                resultado[campo] = None if campo not in ("accion", "cantidad", "stock", "solo") else ("buscar_productos" if campo == "accion" else None if campo == "cantidad" else True if campo == "stock" else True)
+        if resultado.get("accion") not in {"buscar_productos", "precio", "stock", "web", "conversacion"}:
+            raise ValueError("Acción de intención inválida")
+        if resultado.get("cantidad") is not None:
+            try:
+                resultado["cantidad"] = int(resultado["cantidad"])
+            except (TypeError, ValueError):
+                resultado["cantidad"] = None
+        if resultado.get("stock") not in (True, False, None):
+            resultado["stock"] = True
+        if resultado.get("solo") not in (True, False):
+            resultado["solo"] = True
+        return resultado
+    except (json.JSONDecodeError, ValueError):
         inicio = contenido.find("{")
         fin = contenido.rfind("}")
-
         if inicio != -1 and fin != -1:
-
             try:
-
-                return json.loads(contenido[inicio:fin + 1])
-
+                resultado = json.loads(contenido[inicio:fin + 1])
+                if isinstance(resultado, dict):
+                    return resultado
             except Exception:
-
                 pass
-
-    return {"accion": "buscar", "consulta": mensaje}
+        return {
+            "accion": "buscar_productos",
+            "categoria": None,
+            "tipo": None,
+            "marca": None,
+            "familia": None,
+            "ddr": None,
+            "socket": None,
+            "cantidad": None,
+            "stock": True,
+            "solo": True,
+        }
 
 
 # ============================================================
@@ -2487,52 +2400,107 @@ def resolver_consulta_con_contexto(consulta, sesion):
 def procesar_mensaje(mensaje, api, sesion):
 
     intencion = detectar_intencion(mensaje)
-
-    accion = intencion.get("accion", "buscar")
+    accion = intencion.get("accion", "buscar_productos")
     consulta = intencion.get("consulta", mensaje)
 
-    log.info("Acción: %s | Consulta: %s", accion, consulta)
-
-    # ========================================================
-    # CONVERSACIÓN
-    # ========================================================
+    log.info("Acción: %s | Consulta: %s | Intención: %s", accion, consulta, intencion)
 
     if accion == "conversacion":
-
         respuesta = generar_respuesta(mensaje, {}, sesion.historial)
 
-    # ========================================================
-    # WEB
-    # ========================================================
-
     elif accion == "web":
-
         limite_web = 10 if es_consulta_deportiva(consulta) else 6
-
         resultados_web = buscar_web(consulta, limite=limite_web)
-
-        datos = {
-            "tipo": "busqueda_web",
-            "consulta": consulta,
-            "resultados": resultados_web
-        }
-
+        datos = {"tipo": "busqueda_web", "consulta": consulta, "resultados": resultados_web}
         respuesta = generar_respuesta(mensaje, datos, sesion.historial)
 
-    # ========================================================
-    # CATÁLOGO
-    # ========================================================
-
-    else:
-
-        consulta = resolver_consulta_con_contexto(consulta, sesion)
-
-        resultados = buscar_productos(consulta, api.catalogo)
-
+    elif accion == "buscar_productos":
+        consulta = resolver_consulta_con_contexto(consulta or mensaje, sesion)
+        resultados = buscar_productos(
+            api.catalogo,
+            categoria=intencion.get("categoria"),
+            tipo=intencion.get("tipo"),
+            marca=intencion.get("marca"),
+            familia=intencion.get("familia"),
+            ddr=intencion.get("ddr"),
+            socket=intencion.get("socket"),
+            cantidad=intencion.get("cantidad"),
+            stock=intencion.get("stock"),
+            solo=intencion.get("solo", True),
+            consulta=consulta,
+        )
         sesion.ultimos_productos = resultados
-
         log.info("Buscador: %s resultados", len(resultados))
 
+        pdf_generado = None
+        if len(resultados) >= 3:
+            log.info("Hay %s productos. Generando comparativa PDF...", len(resultados))
+            pdf_generado = generar_pdf_productos(resultados, consulta, api.cotizacion)
+
+        if pdf_generado:
+            nombre_pdf = os.path.basename(pdf_generado)
+            enlace_pdf = f"http://172.15.0.202:{HTTP_PORT}/pdfs/{nombre_pdf}"
+            respuesta = (
+                f"Encontré {len(resultados)} productos relevantes. "
+                f"Podés ver la comparación completa aquí: {enlace_pdf}\n\n"
+                + generar_respuesta(mensaje, {"productos": resultados}, sesion.historial)
+            )
+        else:
+            respuesta = generar_respuesta(mensaje, {"productos": resultados}, sesion.historial)
+
+    else:
+        consulta = resolver_consulta_con_contexto(consulta or mensaje, sesion)
+        resultados = buscar_productos(consulta, api.catalogo)
+        sesion.ultimos_productos = resultados
+        log.info("Buscador: %s resultados", len(resultados))
+
+        pdf_generado = None
+        if len(resultados) >= 3:
+            log.info("Hay %s productos. Generando comparativa PDF...", len(resultados))
+            pdf_generado = generar_pdf_productos(resultados, consulta, api.cotizacion)
+
+        if pdf_generado:
+            nombre_pdf = os.path.basename(pdf_generado)
+            enlace_pdf = f"http://172.15.0.202:{HTTP_PORT}/pdfs/{nombre_pdf}"
+            respuesta = (
+                f"Encontré {len(resultados)} productos relevantes. "
+                f"Podés ver la comparación completa aquí: {enlace_pdf}\n\n"
+                + generar_respuesta(mensaje, {"productos": resultados}, sesion.historial)
+            )
+        else:
+            respuesta = generar_respuesta(mensaje, {"productos": resultados}, sesion.historial)
+
+        
+        # ====================================================
+        # PDF
+        # ====================================================
+
+        pdf_generado = None
+
+        if len(resultados) >= 3:
+
+            log.info(
+                "Hay %s productos. Generando comparativa PDF...",
+                len(resultados)
+            )
+
+            pdf_generado = generar_pdf_productos(
+                resultados,
+                consulta,
+                api.cotizacion,
+            )
+
+        # ====================================================
+        # RESPUESTA CON ENLACE AL PDF
+        # ====================================================
+
+        if pdf_generado:
+
+            nombre_pdf = os.path.basename(pdf_generado)
+
+            enlace_pdf = (
+                f"http://172.15.0.202:{HTTP_PORT}/pdfs/{nombre_pdf}"
+            )
         # ====================================================
         # PDF
         # ====================================================

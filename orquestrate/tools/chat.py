@@ -73,191 +73,105 @@ def _chat_ollama(prompt, num_ctx, output_format=None):
 
 
 def detectar_intencion(mensaje):
-    """Detecta la intención del mensaje del usuario."""
+    """Detecta la intención del usuario y retorna un JSON estructurado."""
     prompt = """
-
-Analizá el mensaje del usuario y devolvé
-ÚNICAMENTE JSON válido.
-
-NO uses markdown.
-NO expliques nada.
-
-    def validar_intencion(valor):
-        acciones_validas = {"buscar", "precio", "stock", "web", "conversacion"}
-        if not isinstance(valor, dict):
-            raise ValueError("La intención no es un objeto JSON")
-        if valor.get("accion") not in acciones_validas:
-            raise ValueError("Acción de intención inválida")
-        if not isinstance(valor.get("consulta", ""), str):
-            raise ValueError("Consulta de intención inválida")
-        return valor
-
-    try:
-        return validar_intencion(json.loads(contenido))
-    except (json.JSONDecodeError, ValueError):
-  "accion": "buscar" | "precio" | "stock" | "web" | "conversacion",
-  "consulta": "texto de búsqueda"
+Devolvé ÚNICAMENTE JSON válido con esta forma:
+{
+  "accion": "buscar_productos",
+  "categoria": null,
+  "tipo": null,
+  "marca": null,
+  "familia": null,
+  "ddr": null,
+  "socket": null,
+  "cantidad": 5,
+  "stock": true,
+  "solo": true
 }
 
-REGLAS IMPORTANTES:
-                return validar_intencion(
-                    json.loads(contenido[inicio:fin + 1])
-                )
-            except (json.JSONDecodeError, ValueError):
+Reglas:
+- accion: buscar_productos | precio | stock | web | conversacion
+- categoria: cpu | gpu | ram | almacenamiento | fuente | motherboard | null
+- tipo: pc | notebook | monitor | teclado | mouse | gamepad | joystick | mochila | auricular | parlante | webcam | null
+- marca: nombre concreto, o null
+- familia: Ryzen 5, Core i5, etc., o null
+- ddr: DDR3 | DDR4 | DDR5 | null
+- socket: AM4 | AM5 | LGA1700 | null
+- cantidad: entero si lo pide el usuario; si no, usa null o un valor razonable
+- stock: true | false | null
+- solo: true cuando pide exclusivamente ese tipo/categoria
 
-web:
-SOLO usar para información que NO provenga
-del catálogo de la empresa y que requiera Internet,
-actualidad o información cambiante.
+Ejemplos:
+- "Dame 5 computadoras" -> {"accion":"buscar_productos","categoria":null,"tipo":"pc","marca":null,"familia":null,"ddr":null,"socket":null,"cantidad":5,"stock":true,"solo":true}
+- "Dame 10 notebooks Lenovo" -> {"accion":"buscar_productos","categoria":null,"tipo":"notebook","marca":"Lenovo","familia":null,"ddr":null,"socket":null,"cantidad":10,"stock":true,"solo":true}
+- "Dame 5 procesadores Ryzen 5" -> {"accion":"buscar_productos","categoria":"cpu","tipo":null,"marca":"AMD","familia":"Ryzen 5","ddr":null,"socket":null,"cantidad":5,"stock":true,"solo":true}
+- "Dame procesadores Intel" -> {"accion":"buscar_productos","categoria":"cpu","tipo":null,"marca":"Intel","familia":null,"ddr":null,"socket":null,"cantidad":null,"stock":true,"solo":true}
+- "Dame 3 memorias DDR5" -> {"accion":"buscar_productos","categoria":"ram","tipo":null,"marca":null,"familia":null,"ddr":"DDR5","socket":null,"cantidad":3,"stock":true,"solo":true}
+- "hola" -> {"accion":"conversacion","categoria":null,"tipo":null,"marca":null,"familia":null,"ddr":null,"socket":null,"cantidad":null,"stock":null,"solo":true}
 
-Ejemplos de web:
-- partidos de fútbol
-- resultados deportivos
-- noticias
-- clima
-- presidente actual
-- eventos actuales
-- información de personas
-- horarios actuales
-
-MUY IMPORTANTE:
-
-Si el usuario pregunta por PRODUCTOS de la empresa,
-SIEMPRE usá "buscar", "precio" o "stock".
-
-NO uses "web" para buscar productos.
-
-Por ejemplo:
-
-"lista de motherboards AM5"
-=> buscar
-
-"que mothers AM5 tenemos"
-=> buscar
-
-"mostrame micros Ryzen 5"
-=> buscar
-
-"que placas de video RTX tenemos"
-=> buscar
-
-"cuanto sale una motherboard AM5"
-=> precio
-
-"cuantas motherboards AM5 tenemos"
-=> stock
-
-"contra quien juega Boca hoy"
-=> web
-
-"cuando juega River"
-=> web
-
-"quien es el presidente actual"
-=> web
-
-IMPORTANTE:
-
-Palabras como "hoy", "ahora" o "actualmente"
-NO convierten automáticamente una consulta de
-producto en web.
-
-Si se habla de un producto del catálogo,
-seguí usando catálogo.
-
-Ejemplo:
-
-"que mothers AM5 tenemos hoy"
-=> buscar
-
-"que micros Ryzen tenemos actualmente"
-=> buscar
-
-EJEMPLOS:
-
-Usuario:
-que memorias ram ddr5 tenemos
-
-Respuesta:
-{"accion":"buscar","consulta":"memorias ram ddr5"}
-
-Usuario:
-cuantos ryzen 7 7700x tenemos
-
-Respuesta:
-{"accion":"stock","consulta":"ryzen 7 7700x"}
-
-Usuario:
-cuanto sale el ryzen 7 7700x
-
-Respuesta:
-{"accion":"precio","consulta":"ryzen 7 7700x"}
-
-Usuario:
-lista de motherboards am5
-
-Respuesta:
-{"accion":"buscar","consulta":"motherboards am5"}
-
-Usuario:
-que mothers am5 tenemos
-
-Respuesta:
-{"accion":"buscar","consulta":"motherboards am5"}
-
-Usuario:
-contra quien juega boca hoy
-
-Respuesta:
-{"accion":"web","consulta":"Boca Juniors partido hoy"}
-
-Usuario:
-cuando juega river
-
-Respuesta:
-{"accion":"web","consulta":"River Plate próximo partido"}
-
-Usuario:
-quien es el presidente de argentina
-
-Respuesta:
-{"accion":"web","consulta":"presidente de Argentina actual"}
-
-Usuario:
-hola
-
-Respuesta:
-{"accion":"conversacion","consulta":""}
-
+NO devuelvas texto fuera del JSON.
 MENSAJE DEL USUARIO:
-
 """ + mensaje
 
     try:
         contenido = _chat_ollama(prompt, num_ctx=OLLAMA_NUM_CTX, output_format="json")
     except RuntimeError as e:
         log.error("detectar_intencion: %s", e)
-        return {"accion": "buscar", "consulta": mensaje}
+        return {
+            "accion": "buscar_productos",
+            "categoria": None,
+            "tipo": None,
+            "marca": None,
+            "familia": None,
+            "ddr": None,
+            "socket": None,
+            "cantidad": None,
+            "stock": True,
+            "solo": True,
+        }
 
     try:
         resultado = json.loads(contenido)
-        acciones_validas = {"buscar", "precio", "stock", "web", "conversacion"}
         if not isinstance(resultado, dict):
             raise ValueError("La intención no es un objeto JSON")
-        if resultado.get("accion") not in acciones_validas:
+        campos = ["accion", "categoria", "tipo", "marca", "familia", "ddr", "socket", "cantidad", "stock", "solo"]
+        for campo in campos:
+            if campo not in resultado:
+                resultado[campo] = None if campo not in ("accion", "cantidad", "stock", "solo") else ("buscar_productos" if campo == "accion" else None if campo == "cantidad" else True if campo == "stock" else True)
+        if resultado.get("accion") not in {"buscar_productos", "precio", "stock", "web", "conversacion"}:
             raise ValueError("Acción de intención inválida")
-        if not isinstance(resultado.get("consulta", ""), str):
-            raise ValueError("Consulta de intención inválida")
+        if resultado.get("cantidad") is not None:
+            try:
+                resultado["cantidad"] = int(resultado["cantidad"])
+            except (TypeError, ValueError):
+                resultado["cantidad"] = None
+        if resultado.get("stock") not in (True, False, None):
+            resultado["stock"] = True
+        if resultado.get("solo") not in (True, False):
+            resultado["solo"] = True
         return resultado
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         inicio = contenido.find("{")
         fin = contenido.rfind("}")
-
         if inicio != -1 and fin != -1:
             try:
-                return json.loads(contenido[inicio:fin + 1])
+                resultado = json.loads(contenido[inicio:fin + 1])
+                if isinstance(resultado, dict):
+                    return resultado
             except Exception:
                 pass
+        return {
+            "accion": "buscar_productos",
+            "categoria": None,
+            "tipo": None,
+            "marca": None,
+            "familia": None,
+            "ddr": None,
+            "socket": None,
+            "cantidad": None,
+            "stock": True,
+            "solo": True,
+        }
 
     return {"accion": "buscar", "consulta": mensaje}
 

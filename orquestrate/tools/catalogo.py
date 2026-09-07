@@ -1093,510 +1093,322 @@ def producto_coincide_exacto(consulta, catalogo):
 # BÚSQUEDA INTELIGENTE
 # ============================================================
 
-def buscar_productos(consulta, catalogo):
+def _producto_en_stock(producto, stock):
+    """Reutiliza la lógica actual de stock del proyecto."""
+    if stock is None:
+        return True
+
+    stock_total = int(producto.get("stock_mdp", 0) or 0) + int(producto.get("stock_caba", 0) or 0)
+
+    if stock is True:
+        return stock_total > 0
+
+    if stock is False:
+        return stock_total == 0
+
+    return True
+
+
+def _producto_coincide_marca(producto, marca):
+    if marca is None:
+        return True
+
+    marca_normalizada = normalizar(marca)
+    if not marca_normalizada:
+        return True
+
+    marca_producto = normalizar(producto.get("marca", ""))
+    nombre = normalizar(producto.get("item_desc_0", ""))
+    descripcion = normalizar(producto.get("item_desc_1", ""))
+    texto = f"{nombre} {descripcion} {marca_producto}".strip()
+
+    if marca_producto and re.search(rf"\b{re.escape(marca_normalizada)}\b", marca_producto):
+        return True
+
+    if marca_normalizada and re.search(rf"\b{re.escape(marca_normalizada)}\b", texto):
+        return True
+
+    return False
+
+
+def _limite_cantidad(cantidad):
+    if cantidad is None:
+        return MAX_SEARCH_RESULTS
+
+    try:
+        cantidad_int = int(cantidad)
+    except (TypeError, ValueError):
+        return MAX_SEARCH_RESULTS
+
+    return max(1, cantidad_int)
+
+
+def buscar_productos(consulta=None, catalogo=None, categoria=None, tipo=None, marca=None, familia=None, ddr=None, socket=None, cantidad=None, stock=True, solo=True):
+    """Búsqueda determinística por filtros estructurados.
+
+    Compatibilidad:
+    - buscar_productos("monitor", catalogo)
+    - buscar_productos(catalogo, categoria="cpu", tipo="pc")
     """
-    Busca productos en el catálogo.
+    if catalogo is None and isinstance(consulta, list):
+        catalogo = consulta
+        consulta = None
 
-    "solo" funciona como filtro obligatorio.
+    if catalogo is None:
+        raise ValueError("catalogo es requerido")
 
-    Ejemplo:
-
-        solo microprocesadores ryzen
-
-    devuelve únicamente CPUs Ryzen.
-
-    No devuelve:
-
-        - notebooks Ryzen
-        - PCs Ryzen
-        - Intel
-        - accesorios
-
-    "todo" permite la búsqueda amplia habitual.
-    """
-
-    # ========================================================
-    # IMPORTANTE:
-    # GUARDAMOS EL TEXTO ORIGINAL ANTES DE MODIFICARLO
-    # ========================================================
-
-    consulta_original = str(consulta or "")
-
-    # DETECTAR SOLO ANTES DE QUITAR PALABRAS
-    es_solo = consulta_es_solo(consulta_original)
-
-    # DETECTAR TODO SOBRE ORIGINAL
-    es_todo = consulta_es_todo(consulta_original)
-
-    # ========================================================
-    # CONSULTAS COMPUESTAS
-    # ========================================================
-
-    partes_consulta = dividir_consultas_compuestas(
-        consulta_original
+    filtros_estructurados = any(
+        valor is not None for valor in (categoria, tipo, marca, familia, ddr, socket)
     )
 
-    # No dividir consultas que contienen SOLO.
-    #
-    # Ejemplo:
-    #   "solo mouse y teclado"
-    #
-    # No queremos perder el contexto "solo".
-    if len(partes_consulta) > 1 and not es_solo:
+    if consulta is not None and isinstance(consulta, str) and not filtros_estructurados:
+        return _buscar_productos_legacy(consulta, catalogo)
 
+    if categoria is None and tipo is None and marca is None and familia is None and ddr is None and socket is None and consulta is None:
+        return []
+
+    resultados = []
+    limite = _limite_cantidad(cantidad)
+
+    for producto in catalogo:
+        texto = texto_producto(producto)
+        nombre = canonizar_terminos(producto.get("item_desc_0", ""))
+
+        if categoria and not producto_pertenece_categoria(producto, categoria):
+            continue
+
+        if tipo and not producto_es_tipo(producto, tipo):
+            continue
+
+        if marca and not _producto_coincide_marca(producto, marca):
+            continue
+
+        if categoria == "cpu" and familia and not producto_cumple_familia_cpu(producto, familia):
+            continue
+
+        if ddr:
+            ddr_busqueda = normalizar(ddr)
+            if ddr_busqueda not in texto:
+                continue
+
+        if socket:
+            socket_busqueda = normalizar(socket)
+            socket_texto = normalizar(texto)
+            if socket_busqueda not in socket_texto:
+                continue
+
+        if stock is not None and not _producto_en_stock(producto, stock):
+            continue
+
+        if tipo == "notebook" and producto_es_tipo(producto, "notebook"):
+            accesorios = ["mochila", "funda", "bolso", "maletin", "soporte", "base", "cooler", "cargador", "mouse", "teclado", "pad", "estabilizador", "bateria externa"]
+            if any(re.search(rf"\b{re.escape(p)}\b", nombre) for p in accesorios):
+                continue
+
+        score = 0
+
+        if categoria and producto_pertenece_categoria(producto, categoria):
+            score += 120
+
+        if tipo and producto_es_tipo(producto, tipo):
+            score += 120
+
+        if marca and _producto_coincide_marca(producto, marca):
+            score += 80
+
+        if familia and categoria == "cpu" and producto_cumple_familia_cpu(producto, familia):
+            score += 120
+
+        if ddr and normalizar(ddr) in texto:
+            score += 80
+
+        if socket and normalizar(socket) in texto:
+            score += 50
+
+        if consulta is not None:
+            q = canonizar_terminos(str(consulta))
+            if q and q in nombre:
+                score += 40
+            if q and q in texto:
+                score += 20
+            for token in tokens(q):
+                if re.search(rf"\b{re.escape(token)}\b", nombre):
+                    score += 10
+                if re.search(rf"\b{re.escape(token)}\b", texto):
+                    score += 5
+
+        if score <= 0:
+            score = 1
+
+        resultados.append((score, resumir_producto(producto)))
+
+    resultados.sort(key=lambda item: item[0], reverse=True)
+
+    vistos = set()
+    productos_finales = []
+    for _, producto in resultados:
+        clave = (
+            producto.get("item_id")
+            or producto.get("codigo")
+            or producto.get("partNumber")
+            or hashlib.sha1(
+                "|".join([
+                    str(producto.get("nombre", "")),
+                    str(producto.get("descripcion", "")),
+                    str(producto.get("marca", "")),
+                    str(producto.get("precio_usd", "")),
+                ]).encode("utf-8")
+            ).hexdigest()
+        )
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        productos_finales.append(producto)
+        if len(productos_finales) >= limite:
+            break
+
+    return productos_finales
+
+
+def _buscar_productos_legacy(consulta, catalogo):
+    """Mantiene la lógica textual actual como fallback seguro."""
+    consulta_original = str(consulta or "")
+    es_solo = consulta_es_solo(consulta_original)
+    es_todo = consulta_es_todo(consulta_original)
+    partes_consulta = dividir_consultas_compuestas(consulta_original)
+
+    if len(partes_consulta) > 1 and not es_solo:
         resultados_unidos = []
         vistos = set()
-
         for parte in partes_consulta:
-
-            for producto in buscar_productos(
-                parte,
-                catalogo,
-            ):
-
-                clave = (
-                    producto.get("item_id")
-                    or producto.get("codigo")
-                    or producto.get("partNumber")
-                )
-
+            for producto in _buscar_productos_legacy(parte, catalogo):
+                clave = producto.get("item_id") or producto.get("codigo") or producto.get("partNumber")
                 if clave in vistos:
                     continue
-
                 vistos.add(clave)
                 resultados_unidos.append(producto)
-
         return resultados_unidos
 
-    # ========================================================
-    # PREPROCESAMIENTO
-    # ========================================================
-
     q_original = normalizar(consulta_original)
-
-    # Quitamos SOLO únicamente para hacer la búsqueda textual.
-    # La variable es_solo ya quedó determinada arriba.
-    q = canonizar_terminos(
-        quitar_palabras_control(consulta_original)
-    )
-
+    q = canonizar_terminos(quitar_palabras_control(consulta_original))
     q_tokens = tokens(q)
-
     categoria_consulta = detectar_categoria_consulta(q)
-
     tipo_producto = detectar_tipo_producto(q)
-
     familia_cpu = detectar_familia_cpu(q)
-
     if categoria_consulta == "gpu":
         familia_cpu = None
-
     ddr_filtro = detectar_ddr(q)
-
     socket_filtro = detectar_socket(q)
 
-    log.info(
-        "Consulta: %s | Solo: %s | Todo: %s | "
-        "Categoría: %s | Tipo: %s | CPU: %s | "
-        "DDR: %s | Socket: %s",
-        q_original,
-        es_solo,
-        es_todo,
-        categoria_consulta,
-        tipo_producto,
-        familia_cpu,
-        ddr_filtro,
-        socket_filtro,
-    )
-
-    # ========================================================
-    # RECORRER CATÁLOGO
-    # ========================================================
-
-    # En modo SOLO, usar búsqueda exacta del nombre
     if es_solo:
-        # Cuando se usa "solo", buscamos coincidencia exacta del nombre del producto
-        # y retornamos directamente los productos resumidos
         productos_exactos = producto_coincide_exacto(consulta_original, catalogo)
-        # Ordenar los resultados para mantener consistencia
         productos_finales = []
         vistos = set()
         for producto in productos_exactos:
-            identificador = (
-                producto.get("item_id")
-                or producto.get("codigo")
-                or producto.get("partNumber")
-            )
+            identificador = producto.get("item_id") or producto.get("codigo") or producto.get("partNumber")
             if identificador in vistos:
                 continue
             vistos.add(identificador)
             productos_finales.append(resumir_producto(producto))
-        
-        log.info(
-            "Productos finales encontrados (SOLO exacto): %s | Solo=%s",
-            len(productos_finales),
-            es_solo,
-        )
         return productos_finales
 
     resultados = []
-
     for producto in catalogo:
-
         texto = texto_producto(producto)
+        nombre = canonizar_terminos(producto.get("item_desc_0", ""))
+        descripcion = canonizar_terminos(producto.get("item_desc_1", ""))
+        marca = canonizar_terminos(producto.get("marca", ""))
+        categoria = canonizar_terminos(producto.get("categoria", ""))
+        subcategoria = canonizar_terminos(producto.get("subcategoria", ""))
+        codigo = canonizar_terminos(producto.get("codigo", ""))
+        ean = canonizar_terminos(producto.get("ean", ""))
+        part_number = canonizar_terminos(producto.get("partNumber", ""))
 
-        nombre = canonizar_terminos(
-            producto.get("item_desc_0", "")
-        )
+        if categoria_consulta and not producto_pertenece_categoria(producto, categoria_consulta):
+            continue
 
-        descripcion = canonizar_terminos(
-            producto.get("item_desc_1", "")
-        )
+        if tipo_producto and not producto_es_tipo(producto, tipo_producto):
+            continue
 
-        marca = canonizar_terminos(
-            producto.get("marca", "")
-        )
+        if familia_cpu and not producto_cumple_familia_cpu(producto, familia_cpu):
+            continue
 
-        categoria = canonizar_terminos(
-            producto.get("categoria", "")
-        )
+        if ddr_filtro and not re.search(rf"\b{re.escape(ddr_filtro)}\b", texto):
+            continue
 
-        subcategoria = canonizar_terminos(
-            producto.get("subcategoria", "")
-        )
-
-        codigo = canonizar_terminos(
-            producto.get("codigo", "")
-        )
-
-        ean = canonizar_terminos(
-            producto.get("ean", "")
-        )
-
-        part_number = canonizar_terminos(
-            producto.get("partNumber", "")
-        )
-
-        # ====================================================
-        # MODO SOLO
-        # ====================================================
-
-        if es_solo:
-
-            # ------------------------------------------------
-            # 1. CATEGORÍA OBLIGATORIA
-            # ------------------------------------------------
-
-            if categoria_consulta:
-
-                if not producto_pertenece_categoria(
-                    producto,
-                    categoria_consulta,
-                ):
-                    continue
-
-            # ------------------------------------------------
-            # 2. TIPO OBLIGATORIO
-            # ------------------------------------------------
-
-            if tipo_producto:
-
-                if not producto_es_tipo(
-                    producto,
-                    tipo_producto,
-                ):
-                    continue
-
-            # ------------------------------------------------
-            # 3. FAMILIA CPU OBLIGATORIA
-            # ------------------------------------------------
-
-            if familia_cpu:
-
-                if not producto_cumple_familia_cpu(
-                    producto,
-                    familia_cpu,
-                ):
-                    continue
-
-            # ------------------------------------------------
-            # 4. TODOS LOS TÉRMINOS OBLIGATORIOS
-            # ------------------------------------------------
-
-            if not producto_contiene_todos_los_terminos(
-                producto,
-                q,
-            ):
-                continue
-
-        # ====================================================
-        # MODO NORMAL
-        # ====================================================
-
-        else:
-
-            if categoria_consulta:
-
-                if not producto_pertenece_categoria(
-                    producto,
-                    categoria_consulta,
-                ):
-                    continue
-
-            if tipo_producto:
-
-                if not producto_es_tipo(
-                    producto,
-                    tipo_producto,
-                ):
-                    continue
-
-            if familia_cpu:
-
-                if not producto_cumple_familia_cpu(
-                    producto,
-                    familia_cpu,
-                ):
-                    continue
-
-        # ====================================================
-        # DDR
-        # ====================================================
-
-        if ddr_filtro:
-
-            if not re.search(
-                rf"\b{re.escape(ddr_filtro)}\b",
-                texto,
-            ):
-                continue
-
-        # ====================================================
-        # SOCKET
-        # ====================================================
-
-        if socket_filtro:
-
-            socket_normalizado = socket_filtro
-
-            if socket_normalizado not in texto:
-                continue
-
-        # ====================================================
-        # FILTRO ESPECÍFICO NOTEBOOK
-        # ====================================================
-
-        if tipo_producto == "notebook":
-
-            accesorios_notebook = [
-                "mochila",
-                "funda",
-                "bolso",
-                "maletin",
-                "soporte",
-                "base",
-                "cooler",
-                "cargador",
-                "mouse",
-                "teclado",
-                "pad",
-                "estabilizador",
-            ]
-
-            es_accesorio = any(
-                re.search(
-                    rf"\b{re.escape(palabra)}\b",
-                    nombre,
-                )
-                for palabra in accesorios_notebook
-            )
-
-            es_notebook = producto_es_tipo(
-                producto,
-                "notebook",
-            )
-
-            if es_accesorio and not es_notebook:
-                continue
-
-        # ====================================================
-        # SCORE
-        # ====================================================
+        if socket_filtro and socket_filtro not in texto:
+            continue
 
         score = 0
-
-        # ----------------------------------------------------
-        # Coincidencia exacta
-        # ----------------------------------------------------
-
         if q and q in nombre:
             score += 150
-
         if q and q in descripcion:
             score += 80
-
         if q and q in marca:
             score += 60
-
         if q and q in subcategoria:
             score += 40
-
         if q and q in categoria:
             score += 40
-
         if q and q in part_number:
             score += 100
-
         if q and q in codigo:
             score += 130
-
         if q and q in ean:
             score += 130
 
-        # ----------------------------------------------------
-        # TOKENS
-        # ----------------------------------------------------
-
         tokens_encontrados = 0
-
         for token in q_tokens:
-
             encontrado = False
-
-            if re.search(
-                rf"\b{re.escape(token)}\b",
-                nombre,
-            ):
+            if re.search(rf"\b{re.escape(token)}\b", nombre):
                 score += 20
                 encontrado = True
-
-            if re.search(
-                rf"\b{re.escape(token)}\b",
-                descripcion,
-            ):
+            if re.search(rf"\b{re.escape(token)}\b", descripcion):
                 score += 8
                 encontrado = True
-
-            if re.search(
-                rf"\b{re.escape(token)}\b",
-                marca,
-            ):
+            if re.search(rf"\b{re.escape(token)}\b", marca):
                 score += 10
                 encontrado = True
-
-            if re.search(
-                rf"\b{re.escape(token)}\b",
-                categoria,
-            ):
+            if re.search(rf"\b{re.escape(token)}\b", categoria):
                 score += 6
                 encontrado = True
-
-            if re.search(
-                rf"\b{re.escape(token)}\b",
-                subcategoria,
-            ):
+            if re.search(rf"\b{re.escape(token)}\b", subcategoria):
                 score += 6
                 encontrado = True
-
-            if re.search(
-                rf"\b{re.escape(token)}\b",
-                part_number,
-            ):
+            if re.search(rf"\b{re.escape(token)}\b", part_number):
                 score += 12
                 encontrado = True
-
-            if re.search(
-                rf"\b{re.escape(token)}\b",
-                codigo,
-            ):
+            if re.search(rf"\b{re.escape(token)}\b", codigo):
                 score += 15
                 encontrado = True
-
             if encontrado:
                 tokens_encontrados += 1
 
-        # ----------------------------------------------------
-        # BONIFICACIONES
-        # ----------------------------------------------------
-
-        if categoria_consulta == "motherboard":
-            score += 100
-
-        elif categoria_consulta == "cpu":
-            score += 100
-
-        elif categoria_consulta == "gpu":
-            score += 100
-
-        elif categoria_consulta == "ram":
-            score += 100
-
-            if ddr_filtro:
-                score += 50
-
-        elif categoria_consulta == "almacenamiento":
-            score += 100
-
-        elif categoria_consulta == "fuente":
-            score += 100
-
+        if categoria_consulta == "ram" and ddr_filtro:
+            score += 70
         if tipo_producto:
             score += 100
-
         if familia_cpu:
             score += 150
-
         if socket_filtro:
             score += 50
 
-        # ====================================================
-        # EVITAR RESULTADOS LEJANOS
-        # ====================================================
-
-        if q_tokens:
-
-            porcentaje = (
-                tokens_encontrados / len(q_tokens)
-            )
-
-            if len(q_tokens) >= 2 and porcentaje < 0.75 and not es_solo:
+        if q_tokens and len(q_tokens) >= 2:
+            porcentaje = tokens_encontrados / len(q_tokens)
+            if porcentaje < 0.75 and not es_solo:
                 continue
-
-        # ====================================================
-        # SIN SCORE
-        # ====================================================
 
         if score <= 0:
             continue
 
-        resultados.append(
-            (score, producto)
-        )
+        resultados.append((score, producto))
 
-    # ========================================================
-    # ORDENAR
-    # ========================================================
-
-    resultados.sort(
-        key=lambda x: x[0],
-        reverse=True,
-    )
-
-    # ========================================================
-    # ELIMINAR DUPLICADOS
-    # ========================================================
+    resultados.sort(key=lambda x: x[0], reverse=True)
 
     productos_finales = []
     vistos = set()
-
     for score, producto in resultados:
-
-        identificador = (
-            producto.get("item_id")
-            or producto.get("codigo")
-            or producto.get("partNumber")
-        )
-
+        identificador = producto.get("item_id") or producto.get("codigo") or producto.get("partNumber")
         if not identificador:
             identificador = hashlib.sha1(
                 "|".join([
@@ -1606,25 +1418,11 @@ def buscar_productos(consulta, catalogo):
                     str(producto.get("precioNeto_USD", "")),
                 ]).encode("utf-8")
             ).hexdigest()
-
         if identificador in vistos:
             continue
-
         vistos.add(identificador)
-
         productos_finales.append(resumir_producto(producto))
-
         if len(productos_finales) >= MAX_SEARCH_RESULTS:
             break
-
-    log.info(
-        "Productos finales encontrados: %s | Solo=%s | "
-        "Categoría=%s | Tipo=%s | Familia=%s",
-        len(productos_finales),
-        es_solo,
-        categoria_consulta,
-        tipo_producto,
-        familia_cpu,
-    )
 
     return productos_finales
