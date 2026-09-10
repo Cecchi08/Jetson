@@ -20,25 +20,51 @@ services:
       retries: 5
     restart: unless-stopped
 
+  orchestrator:
+    build: ./orquestrate
+    volumes:
+      - ./orquestrate/pdf_generados:/app/pdf_generados
+    container_name: orion-orchestrator
+    environment:
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: 9080
+      PDF_PORT: 9081
+      PDF_PUBLIC_BASE_URL: ${PDF_PUBLIC_BASE_URL:-}
+      OLLAMA_HOST: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT}
+      OLLAMA_TIMEOUT_RETRIES: ${OLLAMA_TIMEOUT_RETRIES}
+      OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT}
+      OLLAMA_TIMEOUT_RETRIES: ${OLLAMA_TIMEOUT_RETRIES}
+      GN_ID: ${GN_ID}
+      GN_USERNAME: ${GN_USERNAME}
+      GN_PASSWORD: ${GN_PASSWORD}
+      GN_API_BASE: ${GN_API_BASE}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9080:9080"
+    restart: unless-stopped
+
   backend:
     build: ./backend
     container_name: orion-backend
     environment:
       BACKEND_PORT: ${BACKEND_PORT}
+      ORCHESTRATOR_URL: ${ORCHESTRATOR_URL}
+      ORCHESTRATOR_TIMEOUT: ${ORCHESTRATOR_TIMEOUT}
+      PDF_PORT: ${PDF_PORT:-9081}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL}
-      N8N_TIMEOUT: ${N8N_TIMEOUT:-120000}
     ports:
       - "3000:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - postgres
+      - orchestrator
     restart: unless-stopped
 
   frontend:
