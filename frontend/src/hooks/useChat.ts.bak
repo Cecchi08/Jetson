@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Conversation, Message } from '../types';
 import type { AssistantService } from '../services/backendService';
-import type { ChatMode } from '../components/ChatInput';
 
 const STORAGE_KEY = 'orion-conversations';
 
@@ -46,7 +45,7 @@ export function useChat(service: AssistantService) {
     setActiveId(conversation.id);
   };
 
-  const sendMessage = async (content: string, mode: ChatMode = 'chat') => {
+  const sendMessage = async (content: string) => {
     if (!content.trim() || isGenerating || !activeConversation) return;
     const userMessage: Message = { id: createId(), role: 'user', content: content.trim(), createdAt: new Date().toISOString() };
     const nextMessages = [...activeConversation.messages, userMessage];
@@ -55,7 +54,7 @@ export function useChat(service: AssistantService) {
     setIsGenerating(true);
 
     try {
-      const response = await service.sendMessage(nextMessages, mode);
+      const response = await service.sendMessage(nextMessages);
       const assistantMessage: Message = { id: createId(), role: 'assistant', content: response, createdAt: new Date().toISOString() };
       setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, preview: response, updatedAt: 'Ahora', messages: [...nextMessages, assistantMessage] } : conversation));
     } catch (error) {

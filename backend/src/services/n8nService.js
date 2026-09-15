@@ -4,7 +4,7 @@ const N8N_WEBHOOK_URL =
 
 const N8N_TIMEOUT = Number(process.env.N8N_TIMEOUT || 120000);
 
-export async function callN8n({ message }) {
+export async function callN8n({ message, mode = 'chat' }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), N8N_TIMEOUT);
 
@@ -15,7 +15,7 @@ export async function callN8n({ message }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        mode: 'chat',
+        mode,
         message,
       }),
       signal: controller.signal,
@@ -30,15 +30,26 @@ export async function callN8n({ message }) {
       );
     }
 
-    const result = Array.isArray(payload)
-      ? payload[0]?.response
-      : payload?.response;
-
-    if (typeof result !== 'string' || !result.trim()) {
-      throw new Error('Respuesta inválida de n8n');
+    if (payload === null || payload === undefined) {
+      throw new Error('Respuesta vacía de n8n');
     }
 
-    return result;
+    // CHAT / WEB / ASK
+    if (mode === 'chat' || mode === 'web' || mode === 'ask') {
+      const result = Array.isArray(payload)
+        ? payload[0]?.response
+        : payload?.response;
+
+      if (typeof result !== 'string' || !result.trim()) {
+        throw new Error('Respuesta inválida de n8n');
+      }
+
+      return result.trim();
+    }
+
+    // PDF mantiene respuesta estructurada
+    return payload;
+
   } catch (error) {
     if (error.name === 'AbortError') {
       throw Object.assign(

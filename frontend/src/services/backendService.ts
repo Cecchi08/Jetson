@@ -1,14 +1,14 @@
 import type { Message } from '../types';
 import { authService } from './authService';
+import type { ChatMode } from '../components/ChatInput';
 
 export interface AssistantService {
-  sendMessage(messages: Message[]): Promise<string>;
+  sendMessage(messages: Message[], mode?: ChatMode): Promise<string>;
 }
 
 export const backendService: AssistantService = {
-  async sendMessage(messages) {
+  async sendMessage(messages, mode = 'chat') {
     try {
-      const history = messages.slice(0, -1).map(({ role, content }) => ({ role, content }));
       const message = messages[messages.length - 1]?.content ?? '';
       const token = authService.getToken();
 
@@ -18,20 +18,36 @@ export const backendService: AssistantService = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ message, history }),
+        body: JSON.stringify({
+          message,
+          mode,
+        }),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'No se pudo obtener una respuesta del asistente.' }));
-        throw new Error(errorData?.error || 'No se pudo obtener una respuesta del asistente.');
+        throw new Error(
+          data?.error || 'No se pudo obtener una respuesta del asistente.'
+        );
       }
 
-      const data = await response.json() as { response?: unknown };
-      if (typeof data?.response !== 'string') throw new Error('Respuesta inesperada del servidor.');
-      return data.response;
+      if (data?.response === undefined || data?.response === null) {
+        throw new Error('Respuesta inesperada del servidor.');
+      }
+
+      if (typeof data.response === 'string') {
+        return data.response;
+      }
+
+      return JSON.stringify(data.response, null, 2);
+
     } catch (error) {
       if (error instanceof Error) throw error;
-      throw new Error('No se pudo conectar con el asistente. Verificá que el backend esté ejecutándose.');
+
+      throw new Error(
+        'No se pudo conectar con el asistente. Verificá que el backend esté ejecutándose.'
+      );
     }
   },
 };

@@ -104,3 +104,144 @@ kbd { margin-left: auto; padding: 2px 5px; border: 1px solid rgba(16, 36, 38, .2
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ===== ORION MODE SELECTOR START ===== */
+
+.mode-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 5px;
+  width: fit-content;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(15, 23, 42, 0.82),
+      rgba(8, 15, 30, 0.72)
+    );
+
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(14px);
+}
+
+.mode-button {
+  position: relative;
+
+  min-width: 64px;
+  height: 34px;
+
+  padding: 0 14px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  background: transparent;
+  color: rgba(203, 213, 225, 0.55);
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+
+  cursor: pointer;
+
+  transition:
+    color 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.18s ease,
+    box-shadow 0.22s ease;
+}
+
+/* MODO INACTIVO */
+
+.mode-button:not(.active):hover {
+  color: rgba(226, 232, 240, 0.95);
+
+  background: rgba(255, 255, 255, 0.055);
+
+  border-color: rgba(148, 163, 184, 0.12);
+
+  transform: translateY(-1px);
+}
+
+.mode-button:not(.active):active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* MODO ACTIVO */
+
+.mode-button.active {
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(37, 99, 235, 0.95),
+      rgba(14, 165, 233, 0.9)
+    );
+
+  border-color: rgba(96, 165, 250, 0.75);
+
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.12),
+    0 5px 18px rgba(37, 99, 235, 0.32),
+    0 0 24px rgba(14, 165, 233, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20);
+
+  transform: translateY(-1px);
+}
+
+/* Indicador luminoso del modo seleccionado */
+
+.mode-button.active::after {
+  content: "";
+
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+
+  width: 18px;
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: #38bdf8;
+
+  box-shadow:
+    0 0 7px #38bdf8,
+    0 0 13px rgba(56, 189, 248, 0.75);
+
+  transform: translateX(-50%);
+}
+
+/* Click activo */
+
+.mode-button.active:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Deshabilitado mientras Orion responde */
+
+.mode-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.mode-button.active:disabled {
+  opacity: 0.72;
+
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.08),
+    0 3px 12px rgba(37, 99, 235, 0.20);
+}
+
+/* ===== ORION MODE SELECTOR END ===== */
+

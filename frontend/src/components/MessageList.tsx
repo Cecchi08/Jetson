@@ -8,11 +8,19 @@ interface MessageListProps {
 }
 
 function renderMessage(content: string) {
-  const parts = content.split(/(\/pdfs\/[^\s]+)/g);
+  const parts = content.split(/(https?:\/\/[^\s"']+\/pdfs\/[^\s"']+|\/pdfs\/[^\s"']+)/g);
 
   return parts.map((part, index) => {
-    if (part.startsWith('/pdfs/')) {
-      const url = `${window.location.origin}${part}`;
+    if (
+      part.startsWith('/pdfs/') ||
+      part.startsWith('http://') ||
+      part.startsWith('https://')
+    ) {
+      const cleanPart = part.replace(/["')\]}>,]+$/g, '');
+
+      const url = cleanPart.startsWith('/pdfs/')
+        ? `http://172.15.0.202:8087${cleanPart}`
+        : cleanPart;
 
       return (
         <a

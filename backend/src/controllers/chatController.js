@@ -1,8 +1,10 @@
 import { callN8n } from '../services/n8nService.js';
 
+const VALID_MODES = ['chat', 'web', 'pdf', 'ask'];
+
 export async function chat(req, res) {
   try {
-    const { message } = req.body ?? {};
+    const { message, mode = 'chat' } = req.body ?? {};
 
     if (typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({
@@ -10,8 +12,15 @@ export async function chat(req, res) {
       });
     }
 
+    if (!VALID_MODES.includes(mode)) {
+      return res.status(400).json({
+        error: 'Modo inválido. Valores permitidos: chat, web, pdf, ask',
+      });
+    }
+
     const response = await callN8n({
       message: message.trim(),
+      mode,
     });
 
     return res.status(200).json({ response });
