@@ -8,7 +8,7 @@ interface LoginProps {
 }
 
 export function Login({ onSwitchToRegister, onLoginSuccess }: LoginProps) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export function Login({ onSwitchToRegister, onLoginSuccess }: LoginProps) {
     setLoading(true);
 
     try {
-      const response = await authService.login(username, password);
+      const response = await authService.login(email, password);
       authService.setToken(response.token);
       authService.setUser(response.user);
       onLoginSuccess();
@@ -38,13 +38,13 @@ export function Login({ onSwitchToRegister, onLoginSuccess }: LoginProps) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Usuario</label>
+            <label htmlFor="email">Email</label>
             <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Tu usuario"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Tu email"
               required
               disabled={loading}
             />
