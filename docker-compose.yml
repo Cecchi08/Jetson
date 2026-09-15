@@ -2,34 +2,12 @@ version: '3.3'
 
 services:
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: orion-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
   backend:
     build: ./backend
     container_name: orion-backend
     environment:
       BACKEND_PORT: ${BACKEND_PORT}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_URL: ${DB_URL}
       JWT_SECRET: ${JWT_SECRET}
       N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL}
       N8N_TIMEOUT: ${N8N_TIMEOUT:-120000}
@@ -37,8 +15,6 @@ services:
       - "3000:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      - postgres
     restart: unless-stopped
 
   frontend:
@@ -59,6 +35,3 @@ services:
       - frontend
       - backend
     restart: unless-stopped
-
-volumes:
-  postgres_data:
