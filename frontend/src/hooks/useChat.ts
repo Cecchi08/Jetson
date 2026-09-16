@@ -46,16 +46,23 @@ export function useChat(service: AssistantService) {
     setActiveId(conversation.id);
   };
 
-  const sendMessage = async (content: string, mode: ChatMode = 'chat') => {
-    if (!content.trim() || isGenerating || !activeConversation) return;
-    const userMessage: Message = { id: createId(), role: 'user', content: content.trim(), createdAt: new Date().toISOString() };
+  const sendMessage = async (content: string, mode: ChatMode = 'chat', file?: File) => {
+    if (isGenerating || !activeConversation) return;
+    if (mode !== 'file' && !content.trim()) return;
+    if (mode === 'file' && !file) return;
+    const displayContent =
+      mode === 'file' && file
+        ? `Archivo: ${file.name}`
+        : content.trim();
+
+    const userMessage: Message = { id: createId(), role: 'user', content: displayContent, createdAt: new Date().toISOString() };
     const nextMessages = [...activeConversation.messages, userMessage];
 
-    setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, title: conversation.messages.length ? conversation.title : content.trim().slice(0, 28), preview: content.trim(), updatedAt: 'Ahora', messages: nextMessages } : conversation));
+    setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, title: conversation.messages.length ? conversation.title : displayContent.slice(0, 28), preview: displayContent, updatedAt: 'Ahora', messages: nextMessages } : conversation));
     setIsGenerating(true);
 
     try {
-      const response = await service.sendMessage(nextMessages, mode);
+      const response = await service.sendMessage(nextMessages, mode, file);
       const assistantMessage: Message = { id: createId(), role: 'assistant', content: response, createdAt: new Date().toISOString() };
       setConversations((current) => current.map((conversation) => conversation.id === activeId ? { ...conversation, preview: response, updatedAt: 'Ahora', messages: [...nextMessages, assistantMessage] } : conversation));
     } catch (error) {

@@ -2,15 +2,18 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
+if (!process.env.DB_URL) {
+  throw new Error('DB_URL no está configurada');
+}
+
 const pool = new Pool({
-  host: process.env.POSTGRES_HOST || 'postgres',
-  port: Number(process.env.POSTGRES_PORT || 5432),
-  database: process.env.POSTGRES_DB || 'orion',
-  user: process.env.POSTGRES_USER || 'postgres',
-  password: String(process.env.POSTGRES_PASSWORD || ''),
+  connectionString: process.env.DB_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 15000,
 });
 
 export async function testDatabaseConnection() {
@@ -20,7 +23,8 @@ export async function testDatabaseConnection() {
     const result = await client.query(`
       SELECT
         current_database(),
-        current_schema()
+        current_schema(),
+        current_user
     `);
 
     console.log('Base de datos:', result.rows[0]);

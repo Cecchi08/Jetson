@@ -3,47 +3,26 @@ import { authService } from './authService';
 import type { ChatMode } from '../components/ChatInput';
 
 export interface AssistantService {
-  sendMessage(messages: Message[], mode?: ChatMode, file?: File): Promise<string>;
+  sendMessage(messages: Message[], mode?: ChatMode): Promise<string>;
 }
 
 export const backendService: AssistantService = {
-  async sendMessage(messages, mode = 'chat', file) {
+  async sendMessage(messages, mode = 'chat') {
     try {
       const message = messages[messages.length - 1]?.content ?? '';
       const token = authService.getToken();
 
-      let response: Response;
-
-      if (mode === 'file') {
-        if (!file) {
-          throw new Error('No se seleccionó ningún archivo.');
-        }
-
-        const formData = new FormData();
-
-        formData.append('mode', 'file');
-        formData.append('file', file);
-
-        response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-      } else {
-        response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            message,
-            mode,
-          }),
-        });
-      }
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          message,
+          mode,
+        }),
+      });
 
       const data = await response.json().catch(() => null);
 

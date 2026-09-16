@@ -1,43 +1,20 @@
 import { callN8n } from '../services/n8nService.js';
 
-const VALID_MODES = [
-  'chat',
-  'web',
-  'pdf',
-  'ask',
-  'usd',
-  'libre',
-  'file',
-];
+const VALID_MODES = ['chat', 'web', 'pdf', 'ask', 'usd', 'libre'];
 
 export async function chat(req, res) {
   try {
     const { message, mode = 'chat' } = req.body ?? {};
 
-    if (!VALID_MODES.includes(mode)) {
-      return res.status(400).json({
-        error: `Modo inválido. Valores permitidos: ${VALID_MODES.join(', ')}`,
-      });
-    }
-
-    if (mode === 'file') {
-      if (!req.file) {
-        return res.status(400).json({
-          error: 'El archivo es obligatorio',
-        });
-      }
-
-      const response = await callN8n({
-        mode: 'file',
-        file: req.file,
-      });
-
-      return res.status(200).json({ response });
-    }
-
     if (typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({
         error: 'El campo message es obligatorio',
+      });
+    }
+
+    if (!VALID_MODES.includes(mode)) {
+      return res.status(400).json({
+        error: 'Modo inválido. Valores permitidos: chat, web, pdf, ask',
       });
     }
 

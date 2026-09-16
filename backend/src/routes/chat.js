@@ -1,8 +1,13 @@
-import express from 'express';
+import { Router } from 'express';
+import multer from 'multer';
 import * as chatController from '../controllers/chatController.js';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/chat', chatController.chat);
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
+
+router.post('/chat', upload.single('file'), chatController.chat);
 
 export default router;

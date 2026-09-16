@@ -1,18 +1,11 @@
-import { ArrowUp, File, Paperclip, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowUp, Paperclip, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-export type ChatMode =
-  | 'chat'
-  | 'web'
-  | 'pdf'
-  | 'ask'
-  | 'usd'
-  | 'libre'
-  | 'file';
+export type ChatMode = 'chat' | 'web' | 'pdf' | 'ask' | 'usd' | 'libre';
 
 interface ChatInputProps {
   disabled: boolean;
-  onSend: (content: string, mode: ChatMode, file?: globalThis.File) => void;
+  onSend: (content: string, mode: ChatMode) => void;
 }
 
 const modes: { id: ChatMode; label: string }[] = [
@@ -22,20 +15,15 @@ const modes: { id: ChatMode; label: string }[] = [
   { id: 'ask', label: 'Ask' },
   { id: 'usd', label: 'USD' },
   { id: 'libre', label: 'Libre' },
-  { id: 'file', label: 'File' },
 ];
 
 export function ChatInput({ disabled, onSend }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [mode, setMode] = useState<ChatMode>('chat');
-  const [selectedFile, setSelectedFile] = useState<globalThis.File | null>(null);
-
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const textarea = textareaRef.current;
-
     if (textarea) {
       textarea.style.height = 'auto';
       textarea.style.height = `${Math.min(textarea.scrollHeight, 144)}px`;
@@ -43,24 +31,7 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
   }, [value]);
 
   const submit = () => {
-    if (disabled) return;
-
-    if (mode === 'file') {
-      if (!selectedFile) return;
-
-      onSend(value.trim(), mode, selectedFile);
-      setValue('');
-      setSelectedFile(null);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-
-      return;
-    }
-
-    if (!value.trim()) return;
-
+    if (!value.trim() || disabled) return;
     onSend(value.trim(), mode);
     setValue('');
   };
@@ -82,30 +53,6 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
       </div>
 
       <div className="composer">
-        {selectedFile && (
-          <div className="selected-file">
-            <File size={15} />
-
-            <span title={selectedFile.name}>
-              {selectedFile.name}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedFile(null);
-
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = '';
-                }
-              }}
-              aria-label="Quitar archivo"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-
         <textarea
           ref={textareaRef}
           value={value}
@@ -116,46 +63,18 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
               submit();
             }
           }}
-          placeholder={
-            mode === 'file'
-              ? 'Adjunta un archivo...'
-              : 'Escribe un mensaje...'
-          }
+          placeholder="Escribe un mensaje..."
           rows={1}
           disabled={disabled}
           aria-label="Mensaje para Orion"
         />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          hidden
-          onChange={(event) => {
-            const file = event.target.files?.[0] ?? null;
-
-            if (file) {
-              setSelectedFile(file);
-              setMode('file');
-            }
-          }}
-        />
-
         <div className="composer__tools">
           <div>
-            <button
-              type="button"
-              aria-label="Adjuntar archivo"
-              disabled={disabled}
-              onClick={() => fileInputRef.current?.click()}
-            >
+            <button aria-label="Adjuntar archivo" disabled={disabled}>
               <Paperclip size={17} />
             </button>
-
-            <button
-              type="button"
-              aria-label="Ajustes de respuesta"
-              disabled={disabled}
-            >
+            <button aria-label="Ajustes de respuesta" disabled={disabled}>
               <SlidersHorizontal size={17} />
             </button>
           </div>
@@ -163,12 +82,7 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
           <button
             className="send-button"
             onClick={submit}
-            disabled={
-              disabled ||
-              (mode === 'file'
-                ? !selectedFile
-                : !value.trim())
-            }
+            disabled={disabled || !value.trim()}
             aria-label="Enviar mensaje"
           >
             <ArrowUp size={18} />

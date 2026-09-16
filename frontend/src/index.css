@@ -245,3 +245,180 @@ kbd { margin-left: auto; padding: 2px 5px; border: 1px solid rgba(16, 36, 38, .2
 
 /* ===== ORION MODE SELECTOR END ===== */
 
+
+/* Alinear selector de modos con el input */
+.mode-selector {
+  width: 100%;
+  max-width: 670px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* Alineación exacta selector + input */
+.composer,
+.mode-selector {
+  width: 100%;
+  max-width: 670px;
+  box-sizing: border-box;
+}
+
+.mode-selector {
+  margin: 0 auto 10px;
+}
+
+/* ===== ORION INDEPENDENT SCROLL ===== */
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-shell {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar {
+  height: 100vh;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.conversation-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+.sidebar__footer {
+  flex-shrink: 0;
+}
+
+.chat-panel {
+  height: 100vh;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.chat-header,
+.composer-wrap {
+  flex-shrink: 0;
+}
+
+.chat-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Scrollbars */
+.chat-body,
+.conversation-list {
+  scrollbar-width: thin;
+  scrollbar-color: #40515a transparent;
+}
+
+.chat-body::-webkit-scrollbar,
+.conversation-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-body::-webkit-scrollbar-track,
+.conversation-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-body::-webkit-scrollbar-thumb,
+.conversation-list::-webkit-scrollbar-thumb {
+  background: #40515a;
+  border-radius: 999px;
+}
+
+.chat-body::-webkit-scrollbar-thumb:hover,
+.conversation-list::-webkit-scrollbar-thumb:hover {
+  background: #60737d;
+}
+
+/* Botón flotante para volver al input */
+.scroll-to-bottom {
+  position: absolute;
+  z-index: 10;
+  right: max(7vw, 44px);
+  bottom: 155px;
+
+  display: grid;
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  color: #dffafa;
+  background: #1b242b;
+  border: 1px solid #40515a;
+  border-radius: 50%;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease;
+}
+
+.scroll-to-bottom:hover {
+  transform: translateY(-2px);
+  background: #26343b;
+  border-color: #60dfdb;
+}
+
+@media (max-width: 700px) {
+  .scroll-to-bottom {
+    right: 20px;
+    bottom: 145px;
+  }
+}
+
+/* ===== ORION INDEPENDENT SCROLL END ===== */
+
+/* Archivo seleccionado */
+.selected-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 10px;
+  padding: 7px 9px;
+  color: #b8c8cc;
+  background: #222d34;
+  border: 1px solid #34474f;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.selected-file > span {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-file > button {
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  color: #778991;
+  background: transparent;
+}
+
+.selected-file > button:hover {
+  color: #60dfdb;
+}

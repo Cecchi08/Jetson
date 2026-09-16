@@ -4,61 +4,22 @@ const N8N_WEBHOOK_URL =
 
 const N8N_TIMEOUT = Number(process.env.N8N_TIMEOUT || 120000);
 
-export async function callN8n({
-  message,
-  mode = 'chat',
-  file,
-}) {
+export async function callN8n({ message, mode = 'chat' }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), N8N_TIMEOUT);
 
   try {
-    let response;
-
-    // FILE -> multipart/form-data
-    if (mode === 'file') {
-      if (!file?.buffer) {
-        throw new Error('Archivo inválido');
-      }
-
-      const formData = new FormData();
-
-      formData.append('mode', 'file');
-
-      const blob = new Blob(
-        [file.buffer],
-        {
-          type: file.mimetype || 'application/octet-stream',
-        }
-      );
-
-      formData.append(
-        'file',
-        blob,
-        file.originalname || 'archivo'
-      );
-
-      response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
-    }
-
-    // RESTO -> JSON
-    else {
-      response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mode,
-          message,
-        }),
-        signal: controller.signal,
-      });
-    }
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mode,
+        message,
+      }),
+      signal: controller.signal,
+    });
 
     const payload = await response.json().catch(() => null);
 
@@ -74,11 +35,7 @@ export async function callN8n({
     }
 
     // CHAT / WEB / ASK
-    if (
-      mode === 'chat' ||
-      mode === 'web' ||
-      mode === 'ask'
-    ) {
+    if (mode === 'chat' || mode === 'web' || mode === 'ask') {
       const result = Array.isArray(payload)
         ? payload[0]?.response
         : payload?.response;
@@ -92,10 +49,7 @@ export async function callN8n({
 
     // USD
     if (mode === 'usd') {
-      const data = Array.isArray(payload)
-        ? payload[0]
-        : payload;
-
+      const data = Array.isArray(payload) ? payload[0] : payload;
       const result = data?.mensaje ?? data?.response;
 
       if (typeof result !== 'string' || !result.trim()) {
@@ -106,6 +60,7 @@ export async function callN8n({
     }
 
     // LIBRE
+    // Puede terminar en CHAT, WEB, ASK, USD o PDF
     if (mode === 'libre') {
       const data =
         Array.isArray(payload) && payload.length === 1
@@ -114,31 +69,18 @@ export async function callN8n({
 
       const result = data?.response ?? data?.mensaje;
 
+      // CHAT / WEB / ASK / USD
       if (typeof result === 'string' && result.trim()) {
         return result.trim();
       }
 
-      return payload;
-    }
-
-    // FILE
-    if (mode === 'file') {
-      const data =
-        Array.isArray(payload) && payload.length === 1
-          ? payload[0]
-          : payload;
-
-      const result = data?.response ?? data?.mensaje;
-
-      if (typeof result === 'string' && result.trim()) {
-        return result.trim();
-      }
-
+      // PDF u otra respuesta estructurada
       return payload;
     }
 
     // PDF
     return payload;
+
   } catch (error) {
     if (error.name === 'AbortError') {
       throw Object.assign(

@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { ArrowDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Sidebar } from './components/Sidebar';
@@ -20,8 +19,6 @@ function App() {
   const [authScreen, setAuthScreen] = useState<AuthScreen>('login');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(authService.getUser());
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const chatBodyRef = useRef<HTMLElement>(null);
   
   const { conversations, activeConversation, isGenerating, selectConversation, createConversation, sendMessage } = useChat(backendService);
 
@@ -87,17 +84,7 @@ function App() {
       />
       <main className="chat-panel">
         <ChatHeader assistant={assistant} onMenu={() => setSidebarOpen(true)} />
-        <section
-          className="chat-body"
-          ref={chatBodyRef}
-          onScroll={(event) => {
-            const el = event.currentTarget;
-            const distanceFromBottom =
-              el.scrollHeight - el.scrollTop - el.clientHeight;
-
-            setShowScrollButton(distanceFromBottom > 120);
-          }}
-        >
+        <section className="chat-body">
           <div className="welcome">
             <span className="welcome__eyebrow">
               <span className="signal" /> ESPACIO DE TRABAJO PERSONAL
@@ -110,23 +97,6 @@ function App() {
           </div>
           <MessageList messages={activeConversation.messages} streamingMessage={null} isGenerating={isGenerating} />
         </section>
-
-        {showScrollButton && (
-          <button
-            className="scroll-to-bottom"
-            type="button"
-            aria-label="Ir al final del chat"
-            onClick={() => {
-              chatBodyRef.current?.scrollTo({
-                top: chatBodyRef.current.scrollHeight,
-                behavior: 'smooth',
-              });
-            }}
-          >
-            <ArrowDown size={18} />
-          </button>
-        )}
-
         <ChatInput disabled={isGenerating} onSend={sendMessage} />
       </main>
       {sidebarOpen && <button className="scrim" onClick={() => setSidebarOpen(false)} aria-label="Cerrar menú" />}
