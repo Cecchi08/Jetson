@@ -8,11 +8,6 @@ services:
     environment:
       BACKEND_PORT: ${BACKEND_PORT}
       DB_URL: ${DB_URL}
-      POSTGRESCHAT_HOST: ${POSTGRESCHAT_HOST}
-      POSTGRESCHAT_PORT: ${POSTGRESCHAT_PORT}
-      POSTGRESCHAT_DB: ${POSTGRESCHAT_DB}
-      POSTGRESCHAT_USER: ${POSTGRESCHAT_USER}
-      POSTGRESCHAT_PASSWORD: ${POSTGRESCHAT_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL}
       N8N_TIMEOUT: ${N8N_TIMEOUT:-120000}
@@ -21,9 +16,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
-    networks:
-      - default
-      - n8n_network
 
   frontend:
     build: ./frontend
@@ -43,7 +35,3 @@ services:
       - frontend
       - backend
     restart: unless-stopped
-
-networks:
-  n8n_network:
-    external: true

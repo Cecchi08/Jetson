@@ -1,13 +1,33 @@
 import { ArrowUp, File, Paperclip, SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+export type ChatMode =
+  | 'chat'
+  | 'web'
+  | 'pdf'
+  | 'ask'
+  | 'usd'
+  | 'libre'
+  | 'file';
+
 interface ChatInputProps {
   disabled: boolean;
-  onSend: (content: string, file?: globalThis.File) => void;
+  onSend: (content: string, mode: ChatMode, file?: globalThis.File) => void;
 }
+
+const modes: { id: ChatMode; label: string }[] = [
+  { id: 'chat', label: 'Chat' },
+  { id: 'web', label: 'Web' },
+  { id: 'pdf', label: 'PDF' },
+  { id: 'ask', label: 'Ask' },
+  { id: 'usd', label: 'USD' },
+  { id: 'libre', label: 'Libre' },
+  { id: 'file', label: 'File' },
+];
 
 export function ChatInput({ disabled, onSend }: ChatInputProps) {
   const [value, setValue] = useState('');
+  const [mode, setMode] = useState<ChatMode>('chat');
   const [selectedFile, setSelectedFile] = useState<globalThis.File | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -23,20 +43,44 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
   }, [value]);
 
   const submit = () => {
-    if (disabled || !value.trim()) return;
+    if (disabled) return;
 
-    onSend(value.trim(), selectedFile ?? undefined);
+    if (mode === 'file') {
+      if (!selectedFile) return;
 
-    setValue('');
-    setSelectedFile(null);
+      onSend(value.trim(), mode, selectedFile);
+      setValue('');
+      setSelectedFile(null);
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      return;
     }
+
+    if (!value.trim()) return;
+
+    onSend(value.trim(), mode);
+    setValue('');
   };
 
   return (
     <div className="composer-wrap">
+      <div className="mode-selector">
+        {modes.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={mode === item.id ? 'mode-button active' : 'mode-button'}
+            onClick={() => setMode(item.id)}
+            disabled={disabled}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <div className="composer">
         {selectedFile && (
           <div className="selected-file">
@@ -72,7 +116,11 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
               submit();
             }
           }}
-          placeholder="Escribe un mensaje..."
+          placeholder={
+            mode === 'file'
+              ? 'Adjunta un archivo...'
+              : 'Escribe un mensaje...'
+          }
           rows={1}
           disabled={disabled}
           aria-label="Mensaje para Orion"
@@ -83,7 +131,12 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
           type="file"
           hidden
           onChange={(event) => {
-            setSelectedFile(event.target.files?.[0] ?? null);
+            const file = event.target.files?.[0] ?? null;
+
+            if (file) {
+              setSelectedFile(file);
+              setMode('file');
+            }
           }}
         />
 
@@ -110,7 +163,12 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
           <button
             className="send-button"
             onClick={submit}
-            disabled={disabled || !value.trim()}
+            disabled={
+              disabled ||
+              (mode === 'file'
+                ? !selectedFile
+                : !value.trim())
+            }
             aria-label="Enviar mensaje"
           >
             <ArrowUp size={18} />

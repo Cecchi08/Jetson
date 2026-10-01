@@ -8,17 +8,6 @@ const upload = multer({
   storage: multer.memoryStorage(),
 });
 
-router.get('/chat/conversations', chatController.getConversations);
-
-router.get(
-  '/chat/conversations/:sessionId/messages',
-  chatController.getMessages
-);
-
-router.post(
-  '/chat',
-  upload.single('file'),
-  chatController.chat
-);
+router.post('/chat', upload.single('file'), chatController.chat);
 
 export default router;

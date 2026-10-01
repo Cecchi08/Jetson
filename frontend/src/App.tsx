@@ -23,7 +23,7 @@ function App() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const chatBodyRef = useRef<HTMLElement>(null);
   
-  const { conversations, activeConversation, isGenerating, selectConversation, createConversation, sendMessage } = useChat(backendService);
+  const { conversations, activeConversation, isGenerating, selectConversation, createConversation, sendMessage } = useChat(backendService, isAuthenticated);
 
   useEffect(() => {
     if (!isAuthenticated) {

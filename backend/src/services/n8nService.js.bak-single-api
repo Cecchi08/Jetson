@@ -1,0 +1,153 @@
+const N8N_BASE_URL = 'http://host.docker.internal:5678';
+
+const N8N_UPLOAD_URL =
+  `${N8N_BASE_URL}/webhook-test/archivo/upload`;
+
+const N8N_ORION_URL =
+  `${N8N_BASE_URL}/webhook-test/orion-ai`;
+
+const N8N_TIMEOUT = Number(process.env.N8N_TIMEOUT || 120000);
+
+function createFileBlob(file) {
+  return new Blob(
+    [file.buffer],
+    {
+      type: file.mimetype || 'application/octet-stream',
+    }
+  );
+}
+
+async function uploadFile(file, signal) {
+  const formData = new FormData();
+
+  // Temporalmente hardcodeados
+  formData.append('id_user', 'TEST-001');
+  formData.append('session_id', 'SESSION-001');
+
+  formData.append(
+    'file',
+    createFileBlob(file),
+    file.originalname || 'archivo'
+  );
+
+  const response = await fetch(N8N_UPLOAD_URL, {
+    method: 'POST',
+    body: formData,
+    signal,
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+
+    throw new Error(
+      payload?.error ||
+      `Error al subir archivo a n8n: HTTP ${response.status}`
+    );
+  }
+
+  return response.json().catch(() => null);
+}
+
+async function queryOrion({
+  message,
+  file,
+  user,
+  session_id,
+  signal,
+}) {
+  const formData = new FormData();
+
+  formData.append('message', message);
+
+  if (user) {
+    formData.append('user', user);
+  }
+
+  if (session_id) {
+    formData.append('session_id', session_id);
+  }
+
+  if (file) {
+    formData.append(
+      'file',
+      createFileBlob(file),
+      file.originalname || 'archivo'
+    );
+  }
+
+  const response = await fetch(N8N_ORION_URL, {
+    method: 'POST',
+    body: formData,
+    signal,
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.error ||
+      `n8n respondió con error HTTP ${response.status}`
+    );
+  }
+
+  if (payload === null || payload === undefined) {
+    throw new Error('Respuesta vacía de n8n');
+  }
+
+  const data =
+    Array.isArray(payload) && payload.length === 1
+      ? payload[0]
+      : payload;
+
+  const result =
+    data?.response ??
+    data?.mensaje ??
+    data?.message;
+
+  if (typeof result === 'string' && result.trim()) {
+    return result.trim();
+  }
+
+  return payload;
+}
+
+export async function callN8n({
+  message,
+  file,
+  user,
+  session_id,
+}) {
+  const controller = new AbortController();
+
+  const timer = setTimeout(
+    () => controller.abort(),
+    N8N_TIMEOUT
+  );
+
+  try {
+    // Si existe archivo, primero lo subimos.
+    if (file?.buffer) {
+      await uploadFile(file, controller.signal);
+    }
+
+    // Después siempre consultamos Orion.
+    return await queryOrion({
+      message,
+      file,
+      user,
+      session_id,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw Object.assign(
+        new Error('n8n tardó demasiado en responder'),
+        { name: 'TimeoutError' }
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}

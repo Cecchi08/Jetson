@@ -1,74 +1,101 @@
-import type { Message } from '../types';
+import type { Conversation, Message } from '../types';
 import { authService } from './authService';
-import type { ChatMode } from '../components/ChatInput';
 
 export interface AssistantService {
-  sendMessage(messages: Message[], mode?: ChatMode, file?: File): Promise<string>;
+  getConversations(): Promise<Conversation[]>;
+
+  getMessages(sessionId: string): Promise<Message[]>;
+
+  sendMessage(
+    messages: Message[],
+    file?: File,
+    sessionId?: string
+  ): Promise<string>;
+}
+
+function authHeaders() {
+  return {
+    Authorization: `Bearer ${authService.getToken()}`,
+  };
 }
 
 export const backendService: AssistantService = {
-  async sendMessage(messages, mode = 'chat', file) {
-    try {
-      const message = messages[messages.length - 1]?.content ?? '';
-      const token = authService.getToken();
-
-      let response: Response;
-
-      if (mode === 'file') {
-        if (!file) {
-          throw new Error('No se seleccionó ningún archivo.');
-        }
-
-        const formData = new FormData();
-
-        formData.append('mode', 'file');
-        formData.append('file', file);
-
-        response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-      } else {
-        response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            message,
-            mode,
-          }),
-        });
+  async getConversations() {
+    const response = await fetch(
+      '/api/chat/conversations',
+      {
+        headers: authHeaders(),
       }
+    );
 
-      const data = await response.json().catch(() => null);
+    const data = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        throw new Error(
-          data?.error || 'No se pudo obtener una respuesta del asistente.'
-        );
-      }
-
-      if (data?.response === undefined || data?.response === null) {
-        throw new Error('Respuesta inesperada del servidor.');
-      }
-
-      if (typeof data.response === 'string') {
-        return data.response;
-      }
-
-      return JSON.stringify(data.response, null, 2);
-
-    } catch (error) {
-      if (error instanceof Error) throw error;
-
+    if (!response.ok) {
       throw new Error(
-        'No se pudo conectar con el asistente. Verificá que el backend esté ejecutándose.'
+        data?.error || 'No se pudieron cargar las conversaciones.'
       );
     }
+
+    return Array.isArray(data) ? data : [];
+  },
+
+  async getMessages(sessionId) {
+    const response = await fetch(
+      `/api/chat/conversations/${encodeURIComponent(sessionId)}/messages`,
+      {
+        headers: authHeaders(),
+      }
+    );
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error || 'No se pudieron cargar los mensajes.'
+      );
+    }
+
+    return Array.isArray(data) ? data : [];
+  },
+
+  async sendMessage(messages, file, sessionId) {
+    const message =
+      messages[messages.length - 1]?.content ?? '';
+
+    if (!sessionId) {
+      throw new Error('No existe session_id.');
+    }
+
+    const formData = new FormData();
+
+    formData.append('message', message);
+    formData.append('session_id', sessionId);
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+        'No se pudo obtener una respuesta del asistente.'
+      );
+    }
+
+    if (data?.response === undefined || data?.response === null) {
+      throw new Error('Respuesta inesperada del servidor.');
+    }
+
+    return typeof data.response === 'string'
+      ? data.response
+      : JSON.stringify(data.response, null, 2);
   },
 };

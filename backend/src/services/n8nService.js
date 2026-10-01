@@ -1,71 +1,54 @@
 const N8N_WEBHOOK_URL =
-  process.env.N8N_WEBHOOK_URL ||
-  'http://host.docker.internal:5678/webhook/orion-ai';
+  'http://host.docker.internal:5678/webhook-test/archivo/upload';
 
-const N8N_TIMEOUT = Number(process.env.N8N_TIMEOUT || 120000);
+const N8N_TIMEOUT = Number(
+  process.env.N8N_TIMEOUT || 120000
+);
 
 export async function callN8n({
+  id_user,
+  session_id,
   message,
-  mode = 'chat',
   file,
 }) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), N8N_TIMEOUT);
+
+  const timer = setTimeout(
+    () => controller.abort(),
+    N8N_TIMEOUT
+  );
 
   try {
-    let response;
+    const formData = new FormData();
 
-    // FILE -> multipart/form-data
-    if (mode === 'file') {
-      if (!file?.buffer) {
-        throw new Error('Archivo inválido');
-      }
+    formData.append('id_user', id_user);
+    formData.append('session_id', session_id);
+    formData.append('message', message);
 
-      const formData = new FormData();
-
-      formData.append('mode', 'file');
-
-      const blob = new Blob(
-        [file.buffer],
-        {
-          type: file.mimetype || 'application/octet-stream',
-        }
-      );
+    if (file?.buffer) {
+      const blob = new Blob([file.buffer], {
+        type: file.mimetype || 'application/octet-stream',
+      });
 
       formData.append(
         'file',
         blob,
         file.originalname || 'archivo'
       );
-
-      response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
     }
 
-    // RESTO -> JSON
-    else {
-      response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mode,
-          message,
-        }),
-        signal: controller.signal,
-      });
-    }
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
 
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
       throw new Error(
         payload?.error ||
-        `n8n respondió con error HTTP ${response.status}`
+        `n8n respondió con HTTP ${response.status}`
       );
     }
 
@@ -73,71 +56,20 @@ export async function callN8n({
       throw new Error('Respuesta vacía de n8n');
     }
 
-    // CHAT / WEB / ASK
-    if (
-      mode === 'chat' ||
-      mode === 'web' ||
-      mode === 'ask'
-    ) {
-      const result = Array.isArray(payload)
-        ? payload[0]?.response
-        : payload?.response;
-
-      if (typeof result !== 'string' || !result.trim()) {
-        throw new Error('Respuesta inválida de n8n');
-      }
-
-      return result.trim();
-    }
-
-    // USD
-    if (mode === 'usd') {
-      const data = Array.isArray(payload)
+    const data =
+      Array.isArray(payload) && payload.length === 1
         ? payload[0]
         : payload;
 
-      const result = data?.mensaje ?? data?.response;
+    const result =
+      data?.response ??
+      data?.mensaje ??
+      data?.message;
 
-      if (typeof result !== 'string' || !result.trim()) {
-        throw new Error('Respuesta USD inválida de n8n');
-      }
-
+    if (typeof result === 'string' && result.trim()) {
       return result.trim();
     }
 
-    // LIBRE
-    if (mode === 'libre') {
-      const data =
-        Array.isArray(payload) && payload.length === 1
-          ? payload[0]
-          : payload;
-
-      const result = data?.response ?? data?.mensaje;
-
-      if (typeof result === 'string' && result.trim()) {
-        return result.trim();
-      }
-
-      return payload;
-    }
-
-    // FILE
-    if (mode === 'file') {
-      const data =
-        Array.isArray(payload) && payload.length === 1
-          ? payload[0]
-          : payload;
-
-      const result = data?.response ?? data?.mensaje;
-
-      if (typeof result === 'string' && result.trim()) {
-        return result.trim();
-      }
-
-      return payload;
-    }
-
-    // PDF
     return payload;
   } catch (error) {
     if (error.name === 'AbortError') {

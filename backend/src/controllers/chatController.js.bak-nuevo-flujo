@@ -1,0 +1,97 @@
+import { callN8n } from '../services/n8nService.js';
+
+const VALID_MODES = [
+  'chat',
+  'web',
+  'pdf',
+  'ask',
+  'usd',
+  'libre',
+  'file',
+];
+
+export async function chat(req, res) {
+  try {
+    const { message, mode = 'chat', session_id } = req.body ?? {};
+
+    if (!VALID_MODES.includes(mode)) {
+      return res.status(400).json({
+        error: `Modo inválido. Valores permitidos: ${VALID_MODES.join(', ')}`,
+      });
+    }
+
+    // FILE
+    if (mode === 'file') {
+      const user = req.user?.username;
+
+      if (!req.file) {
+        return res.status(400).json({
+          error: 'El archivo es obligatorio',
+        });
+      }
+
+      if (typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({
+          error: 'El mensaje es obligatorio para procesar el archivo',
+        });
+      }
+
+      if (typeof session_id !== 'string' || !session_id.trim()) {
+        return res.status(400).json({
+          error: 'El session_id es obligatorio',
+        });
+      }
+
+      if (typeof user !== 'string' || !user.trim()) {
+        return res.status(401).json({
+          error: 'No se pudo identificar al usuario',
+        });
+      }
+
+      const response = await callN8n({
+        mode: 'file',
+        message: message.trim(),
+        user: user.trim(),
+        session_id: session_id.trim(),
+        file: req.file,
+      });
+
+      return res.status(200).json({ response });
+    }
+
+    // RESTO DE MODOS
+    if (typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({
+        error: 'El campo message es obligatorio',
+      });
+    }
+
+    const response = await callN8n({
+      message: message.trim(),
+      mode,
+    });
+
+    return res.status(200).json({ response });
+  } catch (error) {
+    console.error('Error en /api/chat:', error.message);
+
+    if (error?.name === 'TimeoutError') {
+      return res.status(504).json({
+        error: 'n8n tardó demasiado en responder',
+      });
+    }
+
+    if (
+      error?.message?.includes('ECONNREFUSED') ||
+      error?.message?.includes('fetch failed')
+    ) {
+      return res.status(503).json({
+        error: 'n8n no está disponible',
+      });
+    }
+
+    return res.status(500).json({
+      error: 'No se pudo procesar la solicitud',
+    });
+  }
+}

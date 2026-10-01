@@ -1,0 +1,81 @@
+import type { Message } from '../types';
+import { authService } from './authService';
+import type { ChatMode } from '../components/ChatInput';
+
+export interface AssistantService {
+  sendMessage(
+    messages: Message[],
+    mode?: ChatMode,
+    file?: File,
+    sessionId?: string
+  ): Promise<string>;
+}
+
+export const backendService: AssistantService = {
+  async sendMessage(messages, mode = 'chat', file, sessionId) {
+    try {
+      const message = messages[messages.length - 1]?.content ?? '';
+      const token = authService.getToken();
+
+      let response: Response;
+
+      if (mode === 'file') {
+        if (!file) {
+          throw new Error('No se seleccionó ningún archivo.');
+        }
+
+        const formData = new FormData();
+
+        formData.append('mode', 'file');
+        formData.append('message', message);
+        formData.append('session_id', sessionId ?? '');
+        formData.append('file', file);
+
+        response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+      } else {
+        response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message,
+            mode,
+          }),
+        });
+      }
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || 'No se pudo obtener una respuesta del asistente.'
+        );
+      }
+
+      if (data?.response === undefined || data?.response === null) {
+        throw new Error('Respuesta inesperada del servidor.');
+      }
+
+      if (typeof data.response === 'string') {
+        return data.response;
+      }
+
+      return JSON.stringify(data.response, null, 2);
+
+    } catch (error) {
+      if (error instanceof Error) throw error;
+
+      throw new Error(
+        'No se pudo conectar con el asistente. Verificá que el backend esté ejecutándose.'
+      );
+    }
+  },
+};
