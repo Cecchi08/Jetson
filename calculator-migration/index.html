@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Envíos a Domicilio | CABA y Mar del Plata</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: radial-gradient(circle at top right, #f8fafc, #f1f5f9);
+    }
+  </style>
+  <link rel="stylesheet" href="/static/ui.css">
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
+          <i class="fa-solid fa-house-chimney-crack text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 leading-tight">Calculadora de Envíos a Domicilio</h1>
+          <p class="text-xs text-slate-500">Salidas desde CABA y Mar del Plata con tarifas oficiales de OCA y TyT</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="/manual" class="text-xs text-slate-600 underline px-2 py-1.5">Manual de uso</a>
+        <a href="/docs" target="_blank" class="text-xs text-slate-500 hover:text-slate-800 hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 transition-colors">
+          <i class="fa-solid fa-code"></i>
+          <span>API Docs</span>
+        </a>
+        <a href="/admin" class="text-xs text-slate-600 hover:text-orange-600 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-orange-300 transition-colors">
+          <i class="fa-solid fa-lock"></i>
+          <span>Admin</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-grow max-w-6xl mx-auto px-4 py-8 w-full">
+    <div class="surface-heading"><h2>Cotizá tu próximo envío</h2><p>Elegí el destino y compará los precios de entrega a domicilio desde CABA o Mar del Plata.</p></div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Calculator Form Card -->
+      <div class="lg:col-span-5 bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-6 md:p-8">
+        <div class="flex items-center gap-2 mb-6 text-orange-600">
+          <i class="fa-solid fa-sliders text-lg"></i>
+          <h2 class="text-lg font-bold text-slate-800">Cotizar Envío a Domicilio</h2>
+        </div>
+
+        <form id="calcForm" class="space-y-4">
+          
+          <!-- Origin Selector (CABA or Mar del Plata only) -->
+          <div>
+            <label  class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+              <i class="fa-solid fa-map-pin text-orange-600 mr-1"></i> Punto de Salida (Origen)
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center justify-center gap-2 border border-slate-300 rounded-xl py-2.5 px-3 cursor-pointer text-xs font-bold transition-all has-[:checked]:border-orange-600 has-[:checked]:bg-orange-50 has-[:checked]:text-orange-900">
+                <input type="radio" name="originRadio" value="caba" checked class="sr-only">
+                <i class="fa-solid fa-city"></i> CABA (Bs As)
+              </label>
+              <label class="flex items-center justify-center gap-2 border border-slate-300 rounded-xl py-2.5 px-3 cursor-pointer text-xs font-bold transition-all has-[:checked]:border-orange-600 has-[:checked]:bg-orange-50 has-[:checked]:text-orange-900">
+                <input type="radio" name="originRadio" value="mdp" class="sr-only">
+                <i class="fa-solid fa-umbrella-beach"></i> Mar del Plata
+              </label>
+            </div>
+          </div>
+
+          <!-- Destination -->
+          <div>
+            <label for="destinationSearch" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+              <i class="fa-solid fa-location-dot text-emerald-500 mr-1"></i> Ciudad de Destino
+            </label>
+            <div id="destinationPicker" class="destination-picker">
+              <input type="search" id="destinationSearch" required autocomplete="off" placeholder="Escribí una ciudad o provincia…" disabled
+                role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="destinationDropdown" aria-describedby="destinationSearchStatus"
+                class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all">
+              <div id="destinationDropdown" role="listbox" aria-label="Destinos coincidentes" hidden></div>
+            </div>
+            <input type="hidden" id="destinationSelect">
+            <p id="destinationSearchStatus" role="status" aria-live="polite" class="text-xs text-slate-500 mt-2">Cargando destinos…</p>
+          </div>
+
+          <!-- Weight -->
+          <div>
+            <label for="weightInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+              <i class="fa-solid fa-weight-hanging text-amber-500 mr-1"></i> Peso del Paquete (kg)
+            </label>
+            <div class="relative">
+              <input type="number" id="weightInput" min="0.1" step="0.1" value="2.0" required placeholder="Ej: 2.5" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-3.5 pr-12 py-2.5 text-sm font-medium focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all">
+              <span class="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">KG</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Se aplica el rango de peso del tarifario de cada transporte.</p>
+          </div>
+
+          <!-- Carrier (Optional filter) -->
+          <div>
+            <label for="carrierSelect" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+              <i class="fa-solid fa-truck text-indigo-500 mr-1"></i> Transporte
+            </label>
+            <select id="carrierSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all">
+              <option value="">Comparar todos los transportes</option>
+            </select>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-orange-500/25 transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-calculator"></i>
+            <span>Calcular Cotización</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Results Column -->
+      <div class="lg:col-span-7 space-y-4">
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-400">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-2xl">
+            <i class="fa-solid fa-boxes-packing"></i>
+          </div>
+          <h3 class="text-base font-semibold text-slate-700 mb-1">Cotizaciones de Entrega en Domicilio</h3>
+          <p class="text-sm max-w-sm mx-auto">Selecciona origen (CABA o Mar del Plata), la ciudad de destino y el peso para cotizar en tiempo real.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden bg-white rounded-2xl border border-slate-200 p-12 text-center">
+          <div class="inline-block animate-spin text-orange-600 text-3xl mb-3">
+            <i class="fa-solid fa-circle-notch"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-600">Calculando tarifas oficiales a domicilio...</p>
+        </div>
+
+        <!-- Results Card Container -->
+        <div id="resultsContainer" class="hidden space-y-4">
+          <!-- Summary Bar -->
+          <div class="bg-orange-50/80 border border-orange-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div class="text-slate-700 font-medium">
+              <span>Origen: <strong id="resOrigin" class="text-slate-900"></strong></span>
+              <i class="fa-solid fa-arrow-right text-xs text-orange-500 mx-2"></i>
+              <span>Destino: <strong id="resDestination" class="text-slate-900"></strong></span>
+              <span class="text-slate-400 mx-2">|</span>
+              <span>Zona: <strong id="resZone" class="text-orange-800 bg-orange-100 px-2 py-0.5 rounded text-xs"></strong></span>
+              <span class="text-slate-400 mx-2">|</span>
+              <span>Peso: <strong id="resWeight" class="text-slate-900"></strong> kg</span>
+            </div>
+            
+            <button id="copyWhatsAppBtn" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+              <span>Copiar para WhatsApp</span>
+            </button>
+          </div>
+
+          <!-- Options List -->
+          <div id="optionsList" class="space-y-3">
+            <!-- Dynamically populated cards -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-4 text-center text-xs text-slate-400">
+    <p>Calculadora de Envíos a Domicilio &copy; 2026. Disponible también vía REST API en <a href="/docs" target="_blank" class="text-orange-600 underline">/docs</a>.</p>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div role="status" aria-live="polite" id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <i class="fa-solid fa-check text-emerald-400"></i>
+    <span id="toastMsg">Mensaje copiado</span>
+  </div>
+
+  <script>
+    let currentCalculation = null;
+    let locations = [];
+    let filteredDestinations = [];
+    let activeDestination = -1;
+    const searchInput = document.getElementById('destinationSearch');
+    const dropdown = document.getElementById('destinationDropdown');
+    const destinationId = document.getElementById('destinationSelect');
+    const searchStatus = document.getElementById('destinationSearchStatus');
+    const normalizeText = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const destinationLabel = location => location.province ? `${location.name} (${location.province})` : location.name;
+
+    function closeDestinations() {
+      dropdown.hidden = true;
+      searchInput.setAttribute('aria-expanded', 'false');
+      searchInput.removeAttribute('aria-activedescendant');
+      activeDestination = -1;
+    }
+    function selectDestination(location) {
+      destinationId.value = location.id;
+      searchInput.value = destinationLabel(location);
+      searchInput.setCustomValidity('');
+      searchStatus.textContent = 'Destino seleccionado.';
+      closeDestinations();
+      searchInput.focus();
+    }
+    function showDestinationMatches() {
+      const term = normalizeText(searchInput.value);
+      dropdown.replaceChildren();
+      activeDestination = -1;
+      searchInput.removeAttribute('aria-activedescendant');
+      if (!term) {
+        filteredDestinations = [];
+        closeDestinations();
+        searchStatus.textContent = 'Escribí para buscar una ciudad o provincia.';
+        return;
+      }
+      filteredDestinations = locations.filter(location => normalizeText(`${location.name} ${location.province || ''}`).includes(term));
+      for (const [index, location] of filteredDestinations.entries()) {
+        const option = document.createElement('div');
+        option.id = `destination-option-${index}`;
+        option.className = 'destination-option';
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-selected', 'false');
+        option.textContent = destinationLabel(location);
+        option.addEventListener('mousedown', event => event.preventDefault());
+        option.addEventListener('click', () => selectDestination(location));
+        dropdown.appendChild(option);
+      }
+      dropdown.hidden = !filteredDestinations.length;
+      searchInput.setAttribute('aria-expanded', String(!dropdown.hidden));
+      searchStatus.textContent = filteredDestinations.length ? `${filteredDestinations.length} coincidencias. Elegí un destino.` : 'No se encontraron destinos. Probá con otro nombre.';
+    }
+    searchInput.addEventListener('input', () => {
+      destinationId.value = '';
+      searchInput.setCustomValidity('Elegí un destino de las coincidencias.');
+      showDestinationMatches();
+    });
+    searchInput.addEventListener('focus', () => { if (!destinationId.value && !searchInput.disabled) showDestinationMatches(); });
+    searchInput.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { closeDestinations(); return; }
+      if (event.key === 'Enter' && !destinationId.value) {
+        event.preventDefault();
+        if (!dropdown.hidden && filteredDestinations.length) selectDestination(filteredDestinations[Math.max(activeDestination, 0)]);
+        return;
+      }
+      if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
+      event.preventDefault();
+      if (dropdown.hidden) showDestinationMatches();
+      if (!filteredDestinations.length) return;
+      activeDestination = (activeDestination + (event.key === 'ArrowDown' ? 1 : -1) + filteredDestinations.length) % filteredDestinations.length;
+      Array.from(dropdown.children).forEach((option, index) => option.setAttribute('aria-selected', String(index === activeDestination)));
+      const option = dropdown.children[activeDestination];
+      searchInput.setAttribute('aria-activedescendant', option.id);
+      option.scrollIntoView({block: 'nearest'});
+    });
+    searchInput.addEventListener('blur', closeDestinations);
+    document.addEventListener('click', event => { if (!document.getElementById('destinationPicker').contains(event.target)) closeDestinations(); });
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastMsg").innerText = message;
+      toast.classList.remove("translate-y-20", "opacity-0");
+      setTimeout(() => toast.classList.add("translate-y-20", "opacity-0"), 3000);
+    }
+
+    async function initData() {
+      try {
+        const [locRes, carrRes] = await Promise.all([
+          fetch("/api/locations"),
+          fetch("/api/carriers")
+        ]);
+
+        const locs = await locRes.json();
+        const carriers = await carrRes.json();
+
+        locations = locs;
+        searchInput.disabled = false;
+        searchInput.setCustomValidity('Elegí un destino de las coincidencias.');
+        searchStatus.textContent = 'Escribí para buscar una ciudad o provincia.';
+
+        // Populate Carriers
+        const carrierSelect = document.getElementById("carrierSelect");
+        carrierSelect.innerHTML = '<option value="">Comparar todos los transportes</option>' + 
+          carriers.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        searchStatus.textContent = "No se pudieron cargar los destinos. Recargá la página para reintentar.";
+      }
+    }
+
+    document.getElementById("calcForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const origin = document.querySelector('input[name="originRadio"]:checked').value;
+      const destId = parseInt(document.getElementById("destinationSelect").value);
+      const weight = parseFloat(document.getElementById("weightInput").value);
+      const carrierIdVal = document.getElementById("carrierSelect").value;
+      const carrierId = carrierIdVal ? parseInt(carrierIdVal) : null;
+
+      if (!destId || !weight || weight <= 0) {
+        alert("Completa el destino y peso.");
+        return;
+      }
+
+      document.getElementById("emptyState").classList.add("hidden");
+      document.getElementById("resultsContainer").classList.add("hidden");
+      document.getElementById("loadingState").classList.remove("hidden");
+
+      try {
+        const res = await fetch("/api/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            origin: origin,
+            destination_id: destId,
+            weight: weight,
+            carrier_id: carrierId
+          })
+        });
+
+        if (!res.ok) throw new Error("Error al calcular el envío");
+
+        const data = await res.json();
+        currentCalculation = data;
+        renderResults(data);
+      } catch (err) {
+        alert(err.message);
+        document.getElementById("emptyState").classList.remove("hidden");
+      } finally {
+        document.getElementById("loadingState").classList.add("hidden");
+      }
+    });
+
+    function formatPrice(val) {
+      return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 }).format(val);
+    }
+
+    function renderResults(data) {
+      document.getElementById("resOrigin").innerText = data.origin_name;
+      document.getElementById("resDestination").innerText = data.destination_province ? `${data.destination_name} (${data.destination_province})` : data.destination_name;
+      document.getElementById("resZone").innerText = data.zone_label;
+      document.getElementById("resWeight").innerText = data.weight;
+
+      const list = document.getElementById("optionsList");
+      list.innerHTML = "";
+
+      (data.unavailable || []).forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-6 text-sm';
+        const title = document.createElement('p'); title.className = 'font-semibold';
+        title.textContent = `${item.carrier_name}: No factible`;
+        const reason = document.createElement('p'); reason.textContent = item.reason;
+        card.append(title, reason); list.appendChild(card);
+      });
+      if (data.results.length === 0 && !(data.unavailable || []).length) {
+        list.innerHTML = `
+          <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-6 text-center text-sm">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mb-2"></i>
+            <p class="font-semibold">No se encontraron tarifas cargadas.</p>
+          </div>
+        `;
+        document.getElementById("resultsContainer").classList.remove("hidden");
+        return;
+      }
+
+      data.results.forEach(item => {
+        const card = document.createElement("div");
+        const isBest = item.is_cheapest;
+        card.className = `bg-white rounded-2xl p-5 border transition-all ${
+          isBest ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md' : 'border-slate-200 shadow-sm'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <span class="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white text-sm shadow-sm" style="background-color: ${item.carrier_color}">
+                ${item.carrier_name.substring(0, 3).toUpperCase()}
+              </span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-base text-slate-900">${item.carrier_name}</h3>
+                  <span class="bg-orange-100 text-orange-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Entrega en Domicilio</span>
+                  ${isBest ? '<span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Mejor Precio</span>' : ''}
+                </div>
+                <div class="text-xs text-slate-500 flex items-center gap-3 mt-1">
+                  <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i> Entrega: <strong>${item.estimated_days}</strong></span>
+                  <span><i class="fa-solid fa-box text-slate-400 mr-1"></i> Tramo: ${item.bracket_desc}</span>
+                </div>
+                ${item.extra_kg === 0 && item.extra_cost > 0 ? `<div class="text-xs mt-2">Adicional de entrega: $${item.extra_cost}</div>` : ''}
+                ${item.extra_kg > 0 ? `
+                  <div class="text-[11px] text-amber-700 mt-1">
+                    * Incluye $${item.extra_cost} (${item.extra_kg}kg excedentes x $${item.extra_kg_rate}/kg)
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="text-right sm:border-l sm:border-slate-100 sm:pl-6 shrink-0 flex sm:flex-col items-center sm:items-end justify-between">
+              <span class="text-xs text-slate-400 block font-medium">Costo Total</span>
+              <span class="text-2xl font-black text-slate-900">${formatPrice(item.total_price)}</span>
+            </div>
+          </div>
+        `;
+
+        list.appendChild(card);
+      });
+
+      document.getElementById("resultsContainer").classList.remove("hidden");
+    }
+
+    // Copy to WhatsApp
+    document.getElementById("copyWhatsAppBtn").addEventListener("click", () => {
+      if (!currentCalculation) return;
+
+      let msg = `📦 *COTIZACIÓN DE ENVÍO A DOMICILIO*\n`;
+      msg += `📍 *Origen:* ${currentCalculation.origin_name}\n`;
+      msg += `🏁 *Destino:* ${currentCalculation.destination_name}${currentCalculation.destination_province ? ` (${currentCalculation.destination_province})` : ''} — ${currentCalculation.zone_label}\n`;
+      msg += `⚖️ *Peso:* ${currentCalculation.weight} kg\n`;
+      msg += `🏠 *Modalidad:* Entrega en Domicilio\n\n`;
+
+      currentCalculation.results.forEach(item => {
+        const bestTag = item.is_cheapest ? " ⭐ (Más económico)" : "";
+        msg += `• *${item.carrier_name}:* ${formatPrice(item.total_price)} (Entrega: ${item.estimated_days})${bestTag}\n`;
+      });
+
+      (currentCalculation.unavailable || []).forEach(item => {
+        msg += `• *${item.carrier_name}:* No factible. ${item.reason}\n`;
+      });
+      msg += `\n_Cotización generada automáticamente._`;
+
+      navigator.clipboard.writeText(msg).then(() => {
+        showToast("¡Cotización copiada para WhatsApp!");
+      });
+    });
+
+    initData();
+  </script>
+</body>
+</html>
