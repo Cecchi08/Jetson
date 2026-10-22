@@ -84,6 +84,7 @@ export function Sidebar({
           <span>Orion IA</span>
         </button>
 
+        {/* Calculadora conservada para reactivarla en el futuro.
         <button
           type="button"
           className={`orion-navigation__item ${
@@ -95,6 +96,7 @@ export function Sidebar({
           <Calculator size={18} />
           <span>Calculadora de Envíos</span>
         </button>
+        */}
       </nav>
 
       {isAuthenticated && activeView === 'agent' && (
